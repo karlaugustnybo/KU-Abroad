@@ -1,5 +1,4 @@
 {
-  "rootDirectory": "src",
   "framework": "tanstack-start",
   "buildCommand": "bun run build",
   "outputDirectory": ".vercel/output",
