@@ -106,6 +106,19 @@ export function DashboardShell({ index, view }: { index: ExplorerIndex; view: 't
         : view === 'table' ? <InstitutionTable institutions={result.institutions} filters={filters} onChange={changeFilters} onSelect={select} />
         : <MapExperience institutions={result.institutions} routeSelected={routeSelected} index={index} initiallyDismissed={detailDismissed} onSelectUrl={institution => changeFilters({ ...filters, selected: institution.id }, false)} onClearUrl={() => changeFilters({ ...filters, selected: '' })} onShowTable={showTable} />}
     </main>
+    <footer className="border-t bg-background">
+      <div className="mx-auto flex max-w-[90rem] flex-col items-center justify-between gap-3 px-4 py-4 text-xs text-muted-foreground sm:flex-row sm:px-6 lg:px-8">
+        <p>Made by Karl August Krogh Nybo</p>
+        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+          <a href="https://github.com/karlaugustnybo/KU-Abroad" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 hover:text-foreground">
+            <ExternalLink className="size-3" />GitHub repo
+          </a>
+          <a href="https://github.com/karlaugustnybo/KU-Abroad/blob/main/LICENSE" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 hover:text-foreground">
+            <ExternalLink className="size-3" />CC0 1.0 License
+          </a>
+        </div>
+      </div>
+    </footer>
     {view === 'table' ? <InstitutionPopup institution={selected} agreementIds={selectedAgreementIds} open={selected !== null && !detailDismissed} onOpenChange={open => { if (!open) { flushSync(() => setSelectionOverride(null)); changeFilters({ ...filters, selected: '' }) } }} onShowMap={() => { setDetailDismissed(true); void navigate({ to: '/map', search: filters }) }} /> : null}
   </div>
 }
