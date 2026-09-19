@@ -1,0 +1,45 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+
+# macOS
+.DS_Store
+
+# Node
+node_modules/
+
+# Generated/build artifacts
+bundle.js
+dist/
+build/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment variables
+.env
+.env.local
+
+# Firecrawl local snapshots/cache (large/generated)
+.firecrawl/
+
+# Data generated during scraping / portal runs
+data/portal-runs/
+data/portal-runs-archive/
+data/portal-runs*/
+data/partner_details/
+data/agreement_details/
+data/portal-investigation/
+data/dataset-history/
+data/*.json
+data/*.jsonl
+data/*.gz
+
+# Keep final DuckDB database
+!data/ku_abroad.duckdb

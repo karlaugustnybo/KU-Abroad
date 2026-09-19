@@ -1,0 +1,82 @@
+{
+  "Mohamed Lamine Debaghine University of Setif 2": {
+    "lat": 36.2137324,
+    "lon": 5.4449312
+  },
+  "Haaga-Helia University of Applied Sciences": {
+    "lat": 60.2179279,
+    "lon": 24.9065251
+  },
+  "Institut d'Etudes Politique de Lyon (Sciences Po)": {
+    "lat": 45.7471156,
+    "lon": 4.8353768
+  },
+  "Institut d'études politiques de Paris (Sciences Po)": {
+    "lat": 48.8538978,
+    "lon": 2.3290212
+  },
+  "Institut d'Etudes Politiques de Toulouse (Sciences Po)": {
+    "lat": 43.6050876,
+    "lon": 1.4311866
+  },
+  "The Historical Archives of the European Union, Firenze": {
+    "lat": 43.7696,
+    "lon": 11.2558
+  },
+  "National Research University Higher School of Economics - Nizhny Novgorod": {
+    "lat": 56.2958052,
+    "lon": 44.0405732
+  },
+  "National Research University Higher School of Economics - St. Petersburg": {
+    "lat": 59.9231015,
+    "lon": 30.3034439
+  },
+  "Adelaide University": {
+    "lat": -34.9189226,
+    "lon": 138.6042367
+  },
+  "Burgundy School of Business": {
+    "lat": 47.3278945,
+    "lon": 5.041228
+  },
+  "Chonnam National University": {
+    "lat": 35.1769099,
+    "lon": 126.9068927
+  },
+  "Konkuk University": {
+    "lat": 37.541847,
+    "lon": 127.0771149
+  },
+  "Kookmin University": {
+    "lat": 37.6114792,
+    "lon": 126.9964154
+  },
+  "Kristiania University of Applied Sciences": {
+    "lat": 59.911213,
+    "lon": 10.744853
+  },
+  "Kyung Hee University": {
+    "lat": 37.5971213,
+    "lon": 127.0519867
+  },
+  "Pusan National University": {
+    "lat": 35.2343498,
+    "lon": 129.0784068
+  },
+  "Sejong University": {
+    "lat": 37.550848,
+    "lon": 127.0746074
+  },
+  "Sophia University": {
+    "lat": 35.68395,
+    "lon": 139.7321744
+  },
+  "Tel Aviv University": {
+    "lat": 32.1123577,
+    "lon": 34.8050129
+  },
+  "University of the Arts Helsinki": {
+    "lat": 60.1816697,
+    "lon": 24.9596878
+  }
+}

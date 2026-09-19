@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "skills": {
+    "deckgl": {
+      "source": "karlaugustnybo/deckgl-skill",
+      "sourceType": "github",
+      "skillPath": "skills/deckgl/SKILL.md",
+      "computedHash": "d5b0e0626c4f91f0a5492508a22dcbe929fef4375ff6208b1560cd854f3043b6"
+    },
+    "deckgl-basemap": {
+      "source": "karlaugustnybo/deckgl-skill",
+      "sourceType": "github",
+      "skillPath": "skills/deckgl-basemap/SKILL.md",
+      "computedHash": "87272c34cf91d6c369ed24053c5aab19a295fe6b3fbc1f10da073c1a393b68fb"
+    },
+    "deckgl-core": {
+      "source": "karlaugustnybo/deckgl-skill",
+      "sourceType": "github",
+      "skillPath": "skills/deckgl-core/SKILL.md",
+      "computedHash": "3583081b43197e0303b886443d4a97b8469fe53e973d90352d73fcb2405257b6"
+    },
+    "deckgl-custom-layer": {
+      "source": "karlaugustnybo/deckgl-skill",
+      "sourceType": "github",
+      "skillPath": "skills/deckgl-custom-layer/SKILL.md",
+      "computedHash": "80079c5aaa9d9d4f076f81b08b8b7f917596d1da768f185399c584fba251655d"
+    },
+    "deckgl-layers": {
+      "source": "karlaugustnybo/deckgl-skill",
+      "sourceType": "github",
+      "skillPath": "skills/deckgl-layers/SKILL.md",
+      "computedHash": "42e59daa243514abe88f38585dedcf1a85490521bc89653a9a934048a5e9f96d"
+    },
+    "deckgl-react": {
+      "source": "karlaugustnybo/deckgl-skill",
+      "sourceType": "github",
+      "skillPath": "skills/deckgl-react/SKILL.md",
+      "computedHash": "a5d4a2744ec7a9954c1afd402f96a05904768d7859da0be15f2e78eabb124908"
+    }
+  }
+}

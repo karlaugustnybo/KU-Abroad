@@ -1,0 +1,14 @@
+{
+  "name": "ku-abroad-workspace",
+  "private": true,
+  "packageManager": "bun@1.3.9",
+  "scripts": {
+    "dev": "cd src && bun run dev",
+    "build": "cd src && bun run build",
+    "start": "cd src && bun run start",
+    "typecheck": "cd src && bun run typecheck",
+    "lint": "cd src && bun run lint",
+    "test": "cd src && bun run test",
+    "build:data": "cd src && bun run build:data"
+  }
+}

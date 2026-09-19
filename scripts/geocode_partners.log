@@ -1,0 +1,162 @@
+[001/63] FAIL Mohamed Lamine Debaghine University of Setif 2
+[002/63] OK Oswaldo Cruz Foundation (-22.9110, -43.2094) [query: Rio de Janeiro, Brazil]
+[003/63] OK Hong Kong Baptist University (22.3380, 114.1826) [query: Hong Kong Baptist University]
+[004/63] OK National Taiwan Normal University (25.0266, 121.5297) [query: National Taiwan Normal University]
+[005/63] FAIL Overflytning
+[006/63] OK Paris Panthéon-Assas Univeristé (ISIT) (56.5142, 8.4899) [query: Paris, Denmark]
+[007/63] OK Estonian University of Life Sciences (58.3780, 26.7290) [query: Tartu, Estonia]
+[008/63] OK Bahir Dar University (11.5719, 37.3971) [query: Bahir Dar University, Bahir Dar, Ethiopia]
+[009/63] OK Mekelle University (13.4843, 39.4554) [query: Mekelle University, Mekelle, Ethiopia]
+[010/63] OK Policy Studies Institute (9.0000, 38.7500) [query: Addis Ababa, Ethiopia]
+[011/63] FAIL Haaga-Helia University of Applied Sciences
+[012/63] FAIL Institut d'Etudes Politique de Lyon (Sciences Po)
+[013/63] OK Institut d'études politiques de Bordeaux (Sciences Po) (44.8056, -0.6308) [query: Pessac, France]
+[014/63] FAIL Institut d'études politiques de Paris (Sciences Po)
+[015/63] FAIL Institut d'Etudes Politiques de Toulouse (Sciences Po)
+[016/63] OK L'École nationale supérieure de paysage (48.8035, 2.1267) [query: Versailles, France]
+[017/63] OK L'Institut Agro (Montpellier) (43.6183, 3.8554) [query: L'Institut Agro (Montpellier), France]
+[018/63] OK L'Institut Agro (Paris) (48.8589, 2.3200) [query: Paris, France]
+[019/63] OK Oniris, Ecole Nationale Vétérinaire, Agroalimentaire et de l'alimentation de Nantes-Atlantique (47.2186, -1.5541) [query: Nantes, France]
+[020/63] OK Université Côte d'Azur (43.7170, 7.2676) [query: Université Côte d'Azur, France]
+[021/63] OK New Vision University (41.7806, 44.7785) [query: New Vision University, Tbilisi, Georgia]
+[022/63] OK Kwame Nkrumah University of Science and Technology (6.6986, -1.6233) [query: Kumasi, Ghana]
+[023/63] OK University for Development Studies (9.3738, -0.8859) [query: University for Development Studies, Tamale, Ghana]
+[024/63] OK University of Western Macedonia (40.3227, 21.7902) [query: University of Western Macedonia, Kila, Greece]
+[025/63] OK University of Szeged (46.2500, 20.1465) [query: University of Szeged, Szeged, Hungary]
+[026/63] OK Sri Venkateswara College – University of Delhi (28.5888, 77.1670) [query: Sri Venkateswara College – University of Delhi, India]
+[027/63] OK Gadjah Mada University (-7.7694, 110.3804) [query: Gadjah Mada University, Daerah Istimewa Yogyakarta, Indonesia]
+[028/63] OK Ca' Foscari University of Venice (45.4046, 12.3105) [query: Venice, Italy]
+[029/63] OK IULM Universita (45.4420, 9.1626) [query: IULM Universita, Milan, Italy]
+[030/63] OK Pegaso University (40.3477, 18.1677) [query: Pegaso University, Italy]
+[031/63] OK Perugia Foreigners' University (43.1070, 12.4030) [query: Perugia, Italy]
+[032/63] FAIL The Historical Archives of the European Union, Firenze
+[033/63] OK Università degli Studi di Napoli Federico II (40.8478, 14.2566) [query: Università degli Studi di Napoli Federico II, Napoli, Italy]
+[034/63] OK Università LUM Giuseppe Degennaro (40.9715, 16.9186) [query: Università LUM Giuseppe Degennaro, Casamassima BA, Italy]
+[035/63] OK University of Gastronomic Sciences (44.6821, 7.8939) [query: University of Gastronomic Sciences, Bra, Italy]
+[036/63] OK University of Messina (38.1938, 15.5542) [query: Messina, Italy]
+[037/63] OK University of Urbino (43.7263, 12.6363) [query: Urbino, Italy]
+[038/63] OK Keio University (35.6821, 139.7183) [query: Keio University, Tokyo, Japan]
+[039/63] OK Sungshin Women's University (37.5914, 127.0222) [query: Sungshin Women's University, Soul, South Korea]
+[040/63] OK Yeungnam University (35.8280, 128.7572) [query: Yeungnam University, Gyeongbuk, South Korea]
+[041/63] OK University of Prishtina (42.6576, 21.1627) [query: University of Prishtina, Kosovo]
+[042/63] OK Universidad Michoacana de San Nicolás de Hidalgo (19.6893, -101.2066) [query: Universidad Michoacana de San Nicolás de Hidalgo, Morelia, Mexico]
+[043/63] OK Egaz og Moniz School of Health and Science (38.6637, -9.1982) [query: Monte de Caparica, Portugal]
+[044/63] FAIL National Research University Higher School of Economics - Nizhny Novgorod
+[045/63] FAIL National Research University Higher School of Economics - St. Petersburg
+[046/63] OK Ural Federal University (56.8431, 60.6439) [query: Ural Federal University, Russia]
+[047/63] OK Universite Cheikh Anta Diop De Dakar (14.6861, -17.4642) [query: Universite Cheikh Anta Diop De Dakar, Dakar, Senegal]
+[048/63] OK LEON UNIVERSITY (42.6133, -5.5604) [query: LEON UNIVERSITY, León, Spain]
+[049/63] OK University of Malaga (36.7231, -4.4497) [query: University of Malaga, Malaga, Spain]
+[050/63] OK ALT School of Theology (59.2747, 15.2151) [query: Örebro, Sweden]
+[051/63] OK University of Basel (47.5613, 7.5753) [query: University of Basel, Switzerland]
+[052/63] OK University of Fribourg (46.7931, 7.1571) [query: University of Fribourg, Switzerland]
+[053/63] OK Sokoine University of Agriculture (-6.8531, 37.6570) [query: Sokoine University of Agriculture, Morogoro, Tanzania]
+[054/63] OK Izmir Katip Celebi University (38.5124, 27.0313) [query: Izmir Katip Celebi University, Izmir, Turkey]
+[055/63] OK Gulu University (2.7890, 32.3169) [query: Gulu University, Gulu City, Uganda]
+[056/63] OK Makerere Universitet (0.3177, 32.5814) [query: Kampala, Uganda]
+[057/63] OK King's College London (51.5031, -0.0900) [query: King's College London, London, United Kingdom]
+[058/63] OK Queen's University Belfast (54.5843, -5.9337) [query: Queen's University Belfast, Belfast, United Kingdom]
+[059/63] OK University of Iowa (41.6311, -91.5408) [query: University of Iowa, Iowa, USA]
+[060/63] OK Washington and Lee University (37.7930, -79.4477) [query: Washington and Lee University, Lexington, USA]
+[001/63] FAIL Mohamed Lamine Debaghine University of Setif 2
+[002/63] OK Oswaldo Cruz Foundation (-22.9110, -43.2094) [query: Rio de Janeiro, Brazil]
+[003/63] OK Hong Kong Baptist University (22.3380, 114.1826) [query: Hong Kong Baptist University]
+[004/63] OK National Taiwan Normal University (25.0266, 121.5297) [query: National Taiwan Normal University]
+[005/63] FAIL Overflytning
+[006/63] OK Paris Panthéon-Assas Univeristé (ISIT) (56.5142, 8.4899) [query: Paris, Denmark]
+[007/63] OK Estonian University of Life Sciences (58.3780, 26.7290) [query: Tartu, Estonia]
+[008/63] OK Bahir Dar University (11.5719, 37.3971) [query: Bahir Dar University, Bahir Dar, Ethiopia]
+[009/63] OK Mekelle University (13.4843, 39.4554) [query: Mekelle University, Mekelle, Ethiopia]
+[010/63] OK Policy Studies Institute (9.0000, 38.7500) [query: Addis Ababa, Ethiopia]
+[011/63] FAIL Haaga-Helia University of Applied Sciences
+[012/63] FAIL Institut d'Etudes Politique de Lyon (Sciences Po)
+[013/63] OK Institut d'études politiques de Bordeaux (Sciences Po) (44.8056, -0.6308) [query: Pessac, France]
+[014/63] FAIL Institut d'études politiques de Paris (Sciences Po)
+[015/63] FAIL Institut d'Etudes Politiques de Toulouse (Sciences Po)
+[016/63] OK L'École nationale supérieure de paysage (48.8035, 2.1267) [query: Versailles, France]
+[017/63] OK L'Institut Agro (Montpellier) (43.6183, 3.8554) [query: L'Institut Agro (Montpellier), France]
+[018/63] OK L'Institut Agro (Paris) (48.8589, 2.3200) [query: Paris, France]
+[019/63] OK Oniris, Ecole Nationale Vétérinaire, Agroalimentaire et de l'alimentation de Nantes-Atlantique (47.2186, -1.5541) [query: Nantes, France]
+[020/63] OK Université Côte d'Azur (43.7170, 7.2676) [query: Université Côte d'Azur, France]
+[021/63] OK New Vision University (41.7806, 44.7785) [query: New Vision University, Tbilisi, Georgia]
+[022/63] OK Kwame Nkrumah University of Science and Technology (6.6986, -1.6233) [query: Kumasi, Ghana]
+[023/63] OK University for Development Studies (9.3738, -0.8859) [query: University for Development Studies, Tamale, Ghana]
+[024/63] OK University of Western Macedonia (40.3227, 21.7902) [query: University of Western Macedonia, Kila, Greece]
+[025/63] OK University of Szeged (46.2500, 20.1465) [query: University of Szeged, Szeged, Hungary]
+[026/63] OK Sri Venkateswara College – University of Delhi (28.5888, 77.1670) [query: Sri Venkateswara College – University of Delhi, India]
+[027/63] OK Gadjah Mada University (-7.7694, 110.3804) [query: Gadjah Mada University, Daerah Istimewa Yogyakarta, Indonesia]
+[028/63] OK Ca' Foscari University of Venice (45.4046, 12.3105) [query: Venice, Italy]
+[029/63] OK IULM Universita (45.4420, 9.1626) [query: IULM Universita, Milan, Italy]
+[030/63] OK Pegaso University (40.3477, 18.1677) [query: Pegaso University, Italy]
+[031/63] OK Perugia Foreigners' University (43.1070, 12.4030) [query: Perugia, Italy]
+[032/63] FAIL The Historical Archives of the European Union, Firenze
+[033/63] OK Università degli Studi di Napoli Federico II (40.8478, 14.2566) [query: Università degli Studi di Napoli Federico II, Napoli, Italy]
+[034/63] OK Università LUM Giuseppe Degennaro (40.9715, 16.9186) [query: Università LUM Giuseppe Degennaro, Casamassima BA, Italy]
+[035/63] OK University of Gastronomic Sciences (44.6821, 7.8939) [query: University of Gastronomic Sciences, Bra, Italy]
+[036/63] OK University of Messina (38.1938, 15.5542) [query: Messina, Italy]
+[037/63] OK University of Urbino (43.7263, 12.6363) [query: Urbino, Italy]
+[038/63] OK Keio University (35.6821, 139.7183) [query: Keio University, Tokyo, Japan]
+[039/63] OK Sungshin Women's University (37.5914, 127.0222) [query: Sungshin Women's University, Soul, South Korea]
+[040/63] OK Yeungnam University (35.8280, 128.7572) [query: Yeungnam University, Gyeongbuk, South Korea]
+[041/63] OK University of Prishtina (42.6576, 21.1627) [query: University of Prishtina, Kosovo]
+[042/63] OK Universidad Michoacana de San Nicolás de Hidalgo (19.6893, -101.2066) [query: Universidad Michoacana de San Nicolás de Hidalgo, Morelia, Mexico]
+[043/63] OK Egaz og Moniz School of Health and Science (38.6637, -9.1982) [query: Monte de Caparica, Portugal]
+[044/63] FAIL National Research University Higher School of Economics - Nizhny Novgorod
+[045/63] FAIL National Research University Higher School of Economics - St. Petersburg
+[046/63] OK Ural Federal University (56.8431, 60.6439) [query: Ural Federal University, Russia]
+[047/63] OK Universite Cheikh Anta Diop De Dakar (14.6861, -17.4642) [query: Universite Cheikh Anta Diop De Dakar, Dakar, Senegal]
+[048/63] OK LEON UNIVERSITY (42.6133, -5.5604) [query: LEON UNIVERSITY, León, Spain]
+[049/63] OK University of Malaga (36.7231, -4.4497) [query: University of Malaga, Malaga, Spain]
+[050/63] OK ALT School of Theology (59.2747, 15.2151) [query: Örebro, Sweden]
+[051/63] OK University of Basel (47.5613, 7.5753) [query: University of Basel, Switzerland]
+[052/63] OK University of Fribourg (46.7931, 7.1571) [query: University of Fribourg, Switzerland]
+[053/63] OK Sokoine University of Agriculture (-6.8531, 37.6570) [query: Sokoine University of Agriculture, Morogoro, Tanzania]
+[054/63] OK Izmir Katip Celebi University (38.5124, 27.0313) [query: Izmir Katip Celebi University, Izmir, Turkey]
+[055/63] OK Gulu University (2.7890, 32.3169) [query: Gulu University, Gulu City, Uganda]
+[056/63] OK Makerere Universitet (0.3177, 32.5814) [query: Kampala, Uganda]
+[057/63] OK King's College London (51.5031, -0.0900) [query: King's College London, London, United Kingdom]
+[058/63] OK Queen's University Belfast (54.5843, -5.9337) [query: Queen's University Belfast, Belfast, United Kingdom]
+[059/63] OK University of Iowa (41.6311, -91.5408) [query: University of Iowa, Iowa, USA]
+[060/63] OK Washington and Lee University (37.7930, -79.4477) [query: Washington and Lee University, Lexington, USA]
+[061/63] OK Center for Advanced Technologies (41.3123, 69.2787) [query: Tashkent, Uzbekistan]
+[062/63] OK Tashkent Institute of Chemical Technology (TICT) (41.3123, 69.2787) [query: Tashkent, Uzbekistan]
+[063/63] OK Urgench State University (41.5563, 60.6066) [query: Urgench State University, Urganch, Uzbekistan]
+
+Wrote 517 addresses to /Users/karlaugustnybo/Code/KU-Abroad/.firecrawl/partner_addresses.json
+Failed to geocode 9 institutions:
+  - Mohamed Lamine Debaghine University of Setif 2
+  - Overflytning
+  - Haaga-Helia University of Applied Sciences
+  - Institut d'Etudes Politique de Lyon (Sciences Po)
+  - Institut d'études politiques de Paris (Sciences Po)
+  - Institut d'Etudes Politiques de Toulouse (Sciences Po)
+  - The Historical Archives of the European Union, Firenze
+  - National Research University Higher School of Economics - Nizhny Novgorod
+  - National Research University Higher School of Economics - St. Petersburg
+  File "/Users/karlaugustnybo/Code/KU-Abroad/scripts/geocode_partners.py", line 225
+    failed = [n for n in failed if normalize(n) != key]
+IndentationError: unexpected indent
+    [ERROR] request failed for query 'Overflytning, Denmark': 429 Client Error: Too many requests for url: https://nominatim.openstreetmap.org/search?q=Overflytning%2C+Denmark&format=json&limit=1&addressdetails=0
+    [ERROR] request failed for query 'Overflytning, Denmark': 429 Client Error: Too many requests for url: https://nominatim.openstreetmap.org/search?q=Overflytning%2C+Denmark&format=json&limit=1&addressdetails=0
+    [ERROR] request failed for query 'Overflytning': 429 Client Error: Too many requests for url: https://nominatim.openstreetmap.org/search?q=Overflytning&format=json&limit=1&addressdetails=0
+[001/1] FAIL Overflytning
+[OVERRIDE] Mohamed Lamine Debaghine University of Setif 2 (36.2137324, 5.4449312)
+[OVERRIDE] Haaga-Helia University of Applied Sciences (60.2179279, 24.9065251)
+[OVERRIDE] Institut d'Etudes Politique de Lyon (Sciences Po) (45.7471156, 4.8353768)
+[OVERRIDE] Institut d'études politiques de Paris (Sciences Po) (48.8538978, 2.3290212)
+[OVERRIDE] Institut d'Etudes Politiques de Toulouse (Sciences Po) (43.6050876, 1.4311866)
+[OVERRIDE] The Historical Archives of the European Union, Firenze (43.7696, 11.2558)
+[OVERRIDE] National Research University Higher School of Economics - Nizhny Novgorod (56.2958052, 44.0405732)
+[OVERRIDE] National Research University Higher School of Economics - St. Petersburg (59.9231015, 30.3034439)
+
+Wrote 525 addresses to /Users/karlaugustnybo/Code/KU-Abroad/.firecrawl/partner_addresses.json
+Failed to geocode 1 institutions:
+  - Overflytning
+    [ERROR] request failed for query 'Overflytning, Denmark': 429 Client Error: Too many requests for url: https://nominatim.openstreetmap.org/search?q=Overflytning%2C+Denmark&format=json&limit=1&addressdetails=0
+    [ERROR] request failed for query 'Overflytning, Denmark': 429 Client Error: Too many requests for url: https://nominatim.openstreetmap.org/search?q=Overflytning%2C+Denmark&format=json&limit=1&addressdetails=0
+    [ERROR] request failed for query 'Overflytning': 429 Client Error: Too many requests for url: https://nominatim.openstreetmap.org/search?q=Overflytning&format=json&limit=1&addressdetails=0
+[001/1] FAIL Overflytning
+
+Wrote 512 addresses to /Users/karlaugustnybo/Code/KU-Abroad/.firecrawl/partner_addresses.json
+Failed to geocode 1 institutions:
+  - Overflytning
