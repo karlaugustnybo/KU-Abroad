@@ -26,6 +26,9 @@ build/
 .env
 .env.local
 
+# Vercel
+.vercel/
+
 # Firecrawl local snapshots/cache (large/generated)
 .firecrawl/
 
@@ -43,3 +46,4 @@ data/*.gz
 
 # Keep final DuckDB database
 !data/ku_abroad.duckdb
+.vercel
