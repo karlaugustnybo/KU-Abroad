@@ -14,6 +14,18 @@ from bs4 import BeautifulSoup
 BASE_URL = "https://www.service4mobility.com"
 
 
+# Display names diverge from the portal's raw "Host country" value.
+COUNTRY_DISPLAY_NAMES = {
+    "China (Hong Kong)": "Hong Kong (China)",
+    "China (Taiwan)": "Taiwan",
+}
+
+
+def display_country(value: str) -> str:
+    stripped = (value or "").strip()
+    return COUNTRY_DISPLAY_NAMES.get(stripped, value)
+
+
 def clean_value(soup: BeautifulSoup, node: Any) -> str:
     if node is None:
         return ""
@@ -83,7 +95,9 @@ def parse_detail_html(html: str) -> dict[str, Any]:
         fields[label] = value
 
     partner = fields.get("Partner institution", "")
-    host_country = fields.get("Host country", "")
+    host_country = display_country(fields.get("Host country", ""))
+    if "Host country" in fields:
+        fields["Host country"] = host_country
     return {
         "partner": partner,
         "partnerName": "",

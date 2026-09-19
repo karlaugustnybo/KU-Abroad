@@ -1,5 +1,5 @@
 import { startTransition, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { AlertCircle, ExternalLink, FileText, Loader2, Map, MapPin } from 'lucide-react'
+import { AlertCircle, ExternalLink, FileText, Loader2, Map, MapPin, Star } from 'lucide-react'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '~/components/ui/accordion'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
@@ -8,6 +8,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '
 import { loadInstitutionDetails } from '~/utils/dataset'
 import { aggregateGradeRequirement, formatGrade } from '~/lib/grade'
 import { PORTAL_URL } from '~/lib/exchange'
+import { cn } from '~/lib/utils'
 import type { AgreementRow, InstitutionDetails, InstitutionSummary } from '~/lib/types'
 
 interface Props {
@@ -16,6 +17,8 @@ interface Props {
   open: boolean
   onOpenChange: (open: boolean) => void
   onShowMap: () => void
+  isFavorite?: boolean
+  onToggleFavorite?: () => void
 }
 
 function Linkify({ text }: { text: string }) {
@@ -58,7 +61,7 @@ function Agreement({ agreement }: { agreement: AgreementRow }) {
   </AccordionItem>
 }
 
-export function InstitutionPopup({ institution, agreementIds, open, onOpenChange, onShowMap }: Props) {
+export function InstitutionPopup({ institution, agreementIds, open, onOpenChange, onShowMap, isFavorite = false, onToggleFavorite }: Props) {
   const [loaded, setLoaded] = useState<{ institutionId: string; details: InstitutionDetails } | null>(null)
   const [error, setError] = useState(false)
   useEffect(() => {
@@ -81,7 +84,7 @@ export function InstitutionPopup({ institution, agreementIds, open, onOpenChange
       {!institution ? null : error ? <div className="m-5 rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm"><div className="flex items-center gap-2 font-medium"><AlertCircle className="size-4 text-destructive" />Details could not be loaded</div><p className="mt-1 text-muted-foreground">Close this panel and try again.</p></div>
         : !details ? <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground"><Loader2 className="mr-2 size-4 animate-spin" />Loading details…</div>
         : <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-8">
-          <div className="flex flex-wrap gap-2 py-4">{institution.lat != null && institution.lon != null && <Button variant="outline" onClick={onShowMap}><Map />Show on map</Button>}<Button asChild variant="outline"><a href={PORTAL_URL} target="_blank" rel="noopener noreferrer"><ExternalLink />Official KU portal</a></Button></div>
+          <div className="flex flex-wrap gap-2 py-4">{institution.lat != null && institution.lon != null && <Button variant="outline" onClick={onShowMap}><Map />Show on map</Button>}{onToggleFavorite && <Button variant="outline" aria-pressed={isFavorite} onClick={onToggleFavorite}><Star className={cn(isFavorite && 'fill-amber-400 text-amber-400')} />{isFavorite ? 'Saved' : 'Save'}</Button>}<Button asChild variant="outline"><a href={PORTAL_URL} target="_blank" rel="noopener noreferrer"><ExternalLink />Official KU portal</a></Button></div>
           {details.partnerDetails && <section><h3 className="text-sm font-semibold">Institution information</h3><dl className="mt-2"><DetailRow label="Institution code" value={details.partnerDetails.code} /><DetailRow label="Description" value={details.partnerDetails.description} /><DetailRow label="Semester dates" value={details.partnerDetails.semesterDates} /><DetailRow label="Academic calendar" value={details.partnerDetails.academicCalendar} /><DetailRow label="ECTS converter" value={details.partnerDetails.ectsConverter} /><DetailRow label="Faculty contact" value={details.partnerDetails.facultyContact} /><DetailRow label="Housing contact" value={details.partnerDetails.housingContact} /><DetailRow label="Comment" value={details.partnerDetails.comment} /></dl>
             {!!details.partnerDetails.documents.length && <div className="mt-3 space-y-2">{details.partnerDetails.documents.map(document => <a key={document.url} href={document.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-primary hover:underline"><FileText className="size-4" />{document.label}</a>)}</div>}
           </section>}

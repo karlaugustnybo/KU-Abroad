@@ -16,6 +16,19 @@ META_PATH = ROOT / "data" / "partners_metadata.json"
 OUT_PATH = ROOT / "src" / "assets" / "data" / "partner_details.json"
 BASE_URL = "https://www.service4mobility.com"
 
+# Display names diverge from the portal's raw "Country" value.
+COUNTRY_DISPLAY_NAMES = {
+    "China (Hong Kong)": "Hong Kong (China)",
+    "China (Taiwan)": "Taiwan",
+}
+
+
+def display_country(value: str | None) -> str | None:
+    if value is None:
+        return None
+    stripped = value.strip()
+    return COUNTRY_DISPLAY_NAMES.get(stripped, value)
+
 
 def load_metadata() -> list[dict]:
     if not META_PATH.exists():
@@ -88,7 +101,7 @@ def parse_file(path: Path) -> dict[str, Any] | None:
         "name": name,
         "code": strip_text(code_field.get_text()) if code_field else None,
         "additionalDescription": html_to_text(additional_field) if additional_field else None,
-        "country": strip_text(country_field.get_text()) if country_field else None,
+        "country": display_country(strip_text(country_field.get_text())) if country_field else None,
         "description": html_to_text(description_field) if description_field else None,
         "ectsConverter": html_to_text(ects_field) if ects_field else None,
         "semesterDates": html_to_text(semester_field) if semester_field else None,

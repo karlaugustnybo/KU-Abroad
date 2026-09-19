@@ -75,4 +75,13 @@ describe('explorer filtering', () => {
   test('retains institutions without coordinates in table results', () => {
     expect(selectInstitutions(index, validateFilters({ query: 'Gamma' })).institutions[0].lat).toBeUndefined()
   })
+
+  test('returns a stable reference when only view-only filters change', () => {
+    const base = validateFilters({ query: 'Alpha' })
+    const first = selectInstitutions(index, base)
+    const viewOnlyChange = selectInstitutions(index, { ...base, sort: 'country', direction: 'desc', page: 2, selected: 'one' })
+    expect(viewOnlyChange).toBe(first)
+    const selectionChange = selectInstitutions(index, { ...base, query: 'Beta' })
+    expect(selectionChange).not.toBe(first)
+  })
 })

@@ -100,13 +100,3 @@ export interface Dataset {
   generatedAt: string
   stats: unknown
 }
-
-export interface SummaryStats {
-  totalInstitutions: number
-  withAgreements: number
-  withCoordinates: number
-  totalAgreements: number
-  totalCountries: number
-  continents: Record<string, number>
-  topCountries: { country: string; count: number }[]
-}

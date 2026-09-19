@@ -5,6 +5,17 @@ export const PORTAL_URL = 'https://www.service4mobility.com/europe/PortalServlet
 export type SortKey = 'name' | 'country' | 'city' | 'agreements'
 export type SortDirection = 'asc' | 'desc'
 
+// Display names diverge from the portal's raw "Country" / "Host country" values.
+// Keep in sync with scripts/portal_data.py COUNTRY_DISPLAY_NAMES.
+const COUNTRY_DISPLAY_NAMES: Record<string, string> = {
+  'China (Hong Kong)': 'Hong Kong (China)',
+  'China (Taiwan)': 'Taiwan',
+}
+
+export function displayCountry(country: string): string {
+  return COUNTRY_DISPLAY_NAMES[country.trim()] ?? country
+}
+
 export interface Filters {
   query: string
   continent: string
@@ -39,8 +50,9 @@ export function validateFilters(search: Record<string, unknown>): Filters {
   const grade = Number(search.maxGrade)
   const minPlaces = Number(search.minPlaces)
   const studyLevel = string('studyLevel')
+  const rawCountry = string('country')
   const filters: Filters = {
-    query: string('query'), continent: string('continent'), country: string('country'), academicYear: string('academicYear'), studyField: string('studyField'),
+    query: string('query'), continent: string('continent'), country: rawCountry ? displayCountry(rawCountry) : '', academicYear: string('academicYear'), studyField: string('studyField'),
     program: string('program'),
     studyLevel: ['bachelor', 'master', 'doctoral'].includes(studyLevel) ? studyLevel : '',
     minPlaces: Number.isInteger(minPlaces) && minPlaces > 0 && minPlaces <= 1_000 ? String(minPlaces) : '',
@@ -58,7 +70,36 @@ export function validateFilters(search: Record<string, unknown>): Filters {
 
 const normalize = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
 
-export function selectInstitutions(index: ExplorerIndex, filters: Filters) {
+export interface SelectionResult {
+  institutions: InstitutionSummary[]
+  status: 'overview' | 'available' | 'unavailable'
+  collectedAt: string
+}
+
+// Memoize on the selection-affecting filter fields only, so view-only changes
+// (sort, direction, page, selected) return a stable reference and don't
+// invalidate downstream useMemo/useEffect dependency arrays.
+const selectionCache = new WeakMap<object, { key: string; result: SelectionResult }>()
+
+function selectionKey(filters: Filters): string {
+  return JSON.stringify([
+    filters.query, filters.continent, filters.country, filters.academicYear, filters.studyField,
+    filters.program, filters.studyLevel, filters.minPlaces, filters.languageInfo, filters.housingInfo,
+    filters.scholarshipInfo, filters.maxGrade, filters.gradeUnknown,
+  ])
+}
+
+export function selectInstitutions(index: ExplorerIndex, filters: Filters): SelectionResult {
+  const key = selectionKey(filters)
+  const cached = selectionCache.get(index)
+  if (cached && cached.key === key) return cached.result
+
+  const result = computeSelection(index, filters)
+  selectionCache.set(index, { key, result })
+  return result
+}
+
+function computeSelection(index: ExplorerIndex, filters: Filters): SelectionResult {
   let institutions: InstitutionSummary[] = index.institutions.map(institution => ({ ...institution, matchingAgreementIds: institution.agreementIds }))
   let status: 'overview' | 'available' | 'unavailable' = 'overview'
   let collectedAt = index.generatedAt
@@ -103,20 +144,16 @@ export function activeFilterCount(filters: Filters) {
     filters.minPlaces, filters.languageInfo, filters.housingInfo, filters.scholarshipInfo, filters.maxGrade, filters.gradeUnknown].filter(Boolean).length
 }
 
-export function summarize(institutions: { country: string; continent: string; agreements: unknown[]; lat?: number; lon?: number }[]) {
-  const countries: Record<string, number> = {}
-  const continents: Record<string, number> = {}
+export function summarize(institutions: { country: string; agreements: unknown[]; lat?: number; lon?: number }[]) {
+  const countries = new Set<string>()
   for (const institution of institutions) {
-    countries[institution.country] = (countries[institution.country] ?? 0) + 1
-    continents[institution.continent] = (continents[institution.continent] ?? 0) + 1
+    countries.add(institution.country)
   }
   return {
     totalInstitutions: institutions.length,
     withAgreements: institutions.filter(institution => institution.agreements.length > 0).length,
     withCoordinates: institutions.filter(institution => institution.lat != null && institution.lon != null).length,
     totalAgreements: institutions.reduce((sum, institution) => sum + institution.agreements.length, 0),
-    totalCountries: Object.keys(countries).length,
-    continents,
-    topCountries: Object.entries(countries).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([country, count]) => ({ country, count })),
+    totalCountries: countries.size,
   }
 }

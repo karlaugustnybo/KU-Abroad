@@ -16,6 +16,18 @@ const COORDINATE_OVERRIDES = resolve(ROOT, 'scripts/geocode_overrides.json');
 const readJson = async <T>(path: string): Promise<T> => JSON.parse(await readFile(path, 'utf8'));
 const EXCLUDED_INSTITUTION_CODES = new Set(['DA-Overflytning']);
 
+// Display names diverge from the portal's raw "Country" / "Host country" values.
+// Keep in sync with scripts/portal_data.py COUNTRY_DISPLAY_NAMES.
+const COUNTRY_DISPLAY_NAMES: Record<string, string> = {
+  'China (Hong Kong)': 'Hong Kong (China)',
+  'China (Taiwan)': 'Taiwan',
+};
+export const displayCountry = (value: string | null | undefined): string | null | undefined => {
+  if (value == null) return value;
+  const trimmed = value.trim();
+  return COUNTRY_DISPLAY_NAMES[trimmed] ?? value;
+};
+
 interface RunState {
   schemaVersion: number;
   runId: string;
@@ -55,18 +67,42 @@ export function buildFromRun(
     }
   }
   // Reuse coordinates only for an unambiguous exact name/country/city match.
-  const identity = (i: Pick<Institution,'name'|'country'|'city'>) => JSON.stringify([i.name,i.country,i.city].map(v=>v.normalize('NFKC').toLowerCase().trim()));
+  // Normalize historical country names so "China (Taiwan)" -> "Taiwan" etc.
+  // still matches after the display rename.
+  const normalizedCountry = (country: string) => (displayCountry(country) as string) ?? country;
+  const identity = (i: Pick<Institution,'name'|'country'|'city'>) => JSON.stringify([i.name,normalizedCountry(i.country),i.city].map(v=>v.normalize('NFKC').toLowerCase().trim()));
   const oldByIdentity = new Map<string, Institution[]>();
   for (const institution of previous.institutions) {
     const id = identity(institution);
     oldByIdentity.set(id, [...(oldByIdentity.get(id) ?? []), institution]);
   }
+  const normalizeAgreement = (a: (typeof state.agreements)[string]) => {
+    const hostCountry = (displayCountry(a.hostCountry) as string) ?? a.hostCountry;
+    const details = a.details && 'Host country' in a.details
+      ? { ...a.details, 'Host country': hostCountry }
+      : a.details;
+    return { ...a, hostCountry, details, portalUrl: PORTAL_URL, detailToken: null };
+  };
+  const normalizeInstitution = <T extends { country: string; partnerDetails?: { country?: string | null; fields?: Record<string, string[]> } | null }>(institution: T): T => {
+    const country = normalizedCountry(institution.country);
+    const partnerDetails = institution.partnerDetails
+      ? {
+          ...institution.partnerDetails,
+          country: institution.partnerDetails.country ? (displayCountry(institution.partnerDetails.country) as string) : institution.partnerDetails.country,
+          fields: institution.partnerDetails.fields && 'Country' in institution.partnerDetails.fields
+            ? { ...institution.partnerDetails.fields, Country: [(displayCountry(institution.partnerDetails.fields.Country[0]) as string) ?? institution.partnerDetails.fields.Country[0]] }
+            : institution.partnerDetails.fields,
+        }
+      : institution.partnerDetails;
+    return { ...institution, country, partnerDetails };
+  };
   const institutions = sourceInstitutions.map(institution => {
-    const old = oldByIdentity.get(identity(institution));
-    const agreements = Object.values(state.agreements).filter(a=>a.institutionId===institution.id).map(a=>({...a, portalUrl:PORTAL_URL, detailToken:null}));
+    const normalized = normalizeInstitution(institution);
+    const old = oldByIdentity.get(identity(normalized));
+    const agreements = Object.values(state.agreements).filter(a=>a.institutionId===institution.id).map(normalizeAgreement);
     const manual = coordinateOverrides[institution.name];
     const coordinates = manual ?? (old?.length === 1 ? { lat:old[0].lat, lon:old[0].lon } : {});
-    return { ...institution, ...coordinates, agreements, agreementCount:agreements.length };
+    return { ...normalized, ...coordinates, agreements, agreementCount:agreements.length };
   });
   return {
     institutions, stats:summarize(institutions), generatedAt:state.completedAt,

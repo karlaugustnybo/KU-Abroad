@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Check, ChevronsUpDown, Filter, Search, X } from 'lucide-react'
+import { Bookmark, Check, ChevronsUpDown, Filter, Search, X } from 'lucide-react'
 import { Button } from '~/components/ui/button'
 import { Checkbox } from '~/components/ui/checkbox'
 import { Input } from '~/components/ui/input'
@@ -8,6 +8,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTr
 import { Slider } from '~/components/ui/slider'
 import { formatGrade } from '~/lib/grade'
 import { activeFilterCount, EMPTY_FILTERS, type Filters } from '~/lib/exchange'
+import { useSavedSearches } from '~/lib/collections'
 import { cn } from '~/lib/utils'
 
 interface FilterBarProps {
@@ -20,6 +21,7 @@ interface FilterBarProps {
   programs: string[]
   studyLevels: ('bachelor' | 'master' | 'doctoral')[]
   maxPlaces: number
+  yearAttention?: boolean
 }
 
 interface OptionPickerProps {
@@ -31,19 +33,21 @@ interface OptionPickerProps {
   onValueChange: (value: string) => void
   searchable?: boolean
   disabled?: boolean
+  attention?: boolean
 }
 
-function OptionPicker({ id, label, value, allLabel, options, onValueChange, searchable = false, disabled = false }: OptionPickerProps) {
+function OptionPicker({ id, label, value, allLabel, options, onValueChange, searchable = false, disabled = false, attention = false }: OptionPickerProps) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const matches = options.filter(option => option.label.toLowerCase().includes(query.toLowerCase()))
   const selectedLabel = options.find(option => option.value === value)?.label
+  const flagged = attention && !value
   return <div className="space-y-1.5">
     <label className="text-xs font-medium text-foreground" id={`${id}-label`}>{label}</label>
     <Popover open={open} onOpenChange={value => { setOpen(value); if (value) setQuery('') }}>
       <PopoverTrigger asChild>
         <Button variant="outline" aria-labelledby={`${id}-label`} aria-expanded={open} disabled={disabled} className="h-10 w-full justify-between px-3 font-normal">
-          <span className={cn('truncate', !value && 'text-muted-foreground')}>{selectedLabel || allLabel}</span><ChevronsUpDown className="text-muted-foreground" />
+          <span className={cn('truncate', !value && (flagged ? 'font-medium text-primary' : 'text-muted-foreground'))}>{selectedLabel || allLabel}</span><ChevronsUpDown className="text-muted-foreground" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[var(--radix-popover-trigger-width)] min-w-0 p-2" align="start">
@@ -92,12 +96,12 @@ function FeatureToggle({ label, checked, onCheckedChange }: { label: string; che
   </label>
 }
 
-function FilterControls({ filters, onChange, countries, continents, academicYears, studyFields, programs, studyLevels, maxPlaces }: FilterBarProps) {
+function FilterControls({ filters, onChange, countries, continents, academicYears, studyFields, programs, studyLevels, maxPlaces, yearAttention = false }: FilterBarProps) {
   const update = (change: Partial<Filters>) => onChange({ ...filters, ...change, page: 1, selected: '' })
   const levelLabels = { bachelor: "Bachelor's", master: "Master's / postgraduate", doctoral: 'PhD / doctoral' }
   return <div className="space-y-4">
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      <OptionPicker id="academic-year" label="Academic year" value={filters.academicYear} allLabel="General overview" options={academicYears.map(value => ({ value, label: value }))} onValueChange={academicYear => onChange({ ...filters, academicYear, studyField: '', page: 1, selected: '' })} />
+      <OptionPicker id="academic-year" label="Academic year" value={filters.academicYear} allLabel={yearAttention && !filters.academicYear ? 'Pick an academic year' : 'General overview'} options={academicYears.map(value => ({ value, label: value }))} attention={yearAttention} onValueChange={academicYear => onChange({ ...filters, academicYear, studyField: '', page: 1, selected: '' })} />
       <OptionPicker id="study-field" label="Study field" value={filters.studyField} allLabel="All study fields" options={studyFields.map(value => ({ value, label: value }))} searchable disabled={!filters.academicYear} onValueChange={studyField => update({ studyField })} />
       <OptionPicker id="continent" label="Continent" value={filters.continent} allLabel="All continents" options={continents.map(value => ({ value, label: value }))} onValueChange={continent => update({ continent, country: '' })} />
       <OptionPicker id="country" label="Country" value={filters.country} allLabel="All countries" options={countries.map(value => ({ value, label: value }))} searchable onValueChange={country => update({ country })} />
@@ -117,6 +121,35 @@ function FilterControls({ filters, onChange, countries, continents, academicYear
       </div>
     </div>
   </div>
+}
+
+function SavedSearches({ filters, onChange }: Pick<FilterBarProps, 'filters' | 'onChange'>) {
+  const { searches, save, remove } = useSavedSearches()
+  const [open, setOpen] = useState(false)
+  const [name, setName] = useState('')
+  return <Popover open={open} onOpenChange={value => { setOpen(value); if (value) setName('') }}>
+    <PopoverTrigger asChild>
+      <Button variant="outline" className="h-10 gap-2" aria-label="Saved searches" title="Saved searches">
+        <Bookmark className="size-4" /><span className="hidden sm:inline">Saved</span>{searches.length > 0 && <span className="rounded-full bg-primary px-1.5 text-xs text-primary-foreground">{searches.length}</span>}
+      </Button>
+    </PopoverTrigger>
+    <PopoverContent className="w-80 p-3" align="end">
+      <p className="text-xs font-medium">Save this search</p>
+      <div className="mt-2 flex gap-2">
+        <Input aria-label="Name for saved search" placeholder="e.g. Biology in Japan" value={name} onChange={event => setName(event.target.value)} onKeyDown={event => { if (event.key === 'Enter' && name.trim()) { save(name, filters); setName('') } }} />
+        <Button disabled={!name.trim()} onClick={() => { save(name, filters); setName('') }}>Save</Button>
+      </div>
+      {searches.length > 0 ? <ul className="mt-3 max-h-56 space-y-1 overflow-y-auto">
+        {searches.map(search => <li key={search.id} className="group flex items-center gap-1 rounded-md hover:bg-muted">
+          <button type="button" className="min-w-0 flex-1 truncate px-2 py-2 text-left text-sm" title={`Apply “${search.name}”`} onClick={() => { onChange({ ...search.filters, page: 1, selected: '' }); setOpen(false) }}>
+            <span className="block truncate font-medium">{search.name}</span>
+            <span className="block truncate text-xs text-muted-foreground">{[search.filters.academicYear, search.filters.studyField, search.filters.country || search.filters.continent, search.filters.query].filter(Boolean).join(' · ') || 'All destinations'}</span>
+          </button>
+          <button type="button" aria-label={`Delete saved search “${search.name}”`} onClick={() => remove(search.id)} className="rounded p-1.5 text-muted-foreground opacity-0 hover:text-destructive focus-visible:opacity-100 focus-visible:outline-none group-hover:opacity-100"><X className="size-3.5" /></button>
+        </li>)}
+      </ul> : <p className="mt-3 text-xs text-muted-foreground">No saved searches yet. Name the current filter combination to reuse it later.</p>}
+    </PopoverContent>
+  </Popover>
 }
 
 export function FilterBar(props: FilterBarProps) {
@@ -142,7 +175,8 @@ export function FilterBar(props: FilterBarProps) {
   const clear = () => onChange({ ...EMPTY_FILTERS, query: filters.query })
   return <div className="space-y-3">
     <div className="flex gap-2">
-      <div className="relative flex-1"><Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" /><Input aria-label="Search institutions" placeholder="Search institution, city or country" value={search} onChange={event => setSearch(event.target.value)} className="h-10 bg-card pl-9" /></div>
+      <div className="relative flex-1"><Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" /><Input id="institution-search" aria-label="Search institutions" placeholder="Search institution, city or country (press /)" value={search} onChange={event => setSearch(event.target.value)} className="h-10 bg-card pl-9" /></div>
+      <SavedSearches filters={filters} onChange={onChange} />
       <Sheet><SheetTrigger asChild><Button variant="outline" className="h-10 gap-2 md:hidden"><Filter />Filters{count > 0 && <span className="rounded-full bg-primary px-1.5 text-xs text-primary-foreground">{count}</span>}</Button></SheetTrigger>
         <SheetContent side="bottom"><SheetHeader><SheetTitle>Filter destinations</SheetTitle><SheetDescription className="sr-only">Filter exchange destinations</SheetDescription></SheetHeader><div className="min-h-0 flex-1 overflow-y-auto p-5"><FilterControls {...props} /><Button variant="outline" className="mt-5 w-full" onClick={clear}>Clear filters</Button></div></SheetContent>
       </Sheet>

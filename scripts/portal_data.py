@@ -31,6 +31,19 @@ def normalize(value):
     return ' '.join(unicodedata.normalize('NFKC', value).casefold().split())
 
 
+# Display names diverge from the portal's raw "Country" / "Host country" values.
+COUNTRY_DISPLAY_NAMES = {
+    'China (Hong Kong)': 'Hong Kong (China)',
+    'China (Taiwan)': 'Taiwan',
+}
+
+
+def display_country(value):
+    if value is None:
+        return None
+    return COUNTRY_DISPLAY_NAMES.get(value.strip(), value) if isinstance(value, str) else value
+
+
 def atomic_json(path, data):
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -78,6 +91,7 @@ def parse_partner(row):
     if not isinstance(row, list) or len(row) < 10:
         raise ValueError('Unexpected partner table row')
     name, continent, country, city = [clean(v) for v in row[1:5]]
+    country = display_country(country)
     if not name or not country:
         raise ValueError('Partner without name/country')
     def count(index):
@@ -133,8 +147,12 @@ def agreement(html, institution_id):
         raise ValueError('Missing agreement fields; possible expired session')
     if fields.get('Type of person') != 'Student' or fields.get('Type of application') != 'Outgoing':
         raise ValueError('Agreement is not outgoing student mobility')
+    host_country = display_country(fields.get('Host country', ''))
+    # Keep the raw fields intact for provenance, but expose the display name.
+    if 'Host country' in fields:
+        fields = {**fields, 'Host country': host_country}
     return dict(id='agree-' + digest([institution_id, fields]), institutionId=institution_id,
-                partner=fields['Partner institution'], hostCountry=fields.get('Host country', ''),
+                partner=fields['Partner institution'], hostCountry=host_country,
                 details=fields, portalUrl=PORTAL_URL, detailToken=None)
 
 
@@ -161,7 +179,7 @@ def partner_details(html):
     links = [dict(label=a.get_text(' ', strip=True) or a['href'], url=urljoin(PORTAL_POST, a['href']))
              for a in soup.select('a[href]')]
     return dict(name=get('Name of institution'), code=get('Institution code'),
-                additionalDescription=get('Additional description'), country=get('Country'),
+                additionalDescription=get('Additional description'), country=display_country(get('Country')),
                 description=get('Description'), ectsConverter=get('ECTS converter'),
                 semesterDates=get('Semester dates'), academicCalendar=get('Academic calendar'),
                 facultyContact=get('Faculty information (e-mail contact)'),

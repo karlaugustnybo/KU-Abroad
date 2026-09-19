@@ -1,10 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { DashboardShell } from '~/components/dashboard-shell'
+import { DashboardPending, DashboardShell } from '~/components/dashboard-shell'
 import { validateFilters } from '~/lib/exchange'
 import { getExplorerIndex } from '~/utils/dataset'
 
 export const Route = createFileRoute('/')({
   component: Home,
+  pendingComponent: DashboardPending,
   validateSearch: validateFilters,
   loader: async () => {
     const index = await getExplorerIndex()
