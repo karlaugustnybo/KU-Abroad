@@ -1,12 +1,13 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { ClientOnly, Link, useNavigate, useSearch } from '@tanstack/react-router'
-import { ExternalLink, Keyboard, List, Loader2, Map as MapIcon, SlidersHorizontal, Star } from 'lucide-react'
+import { Columns3, ExternalLink, Keyboard, List, Loader2, Map as MapIcon, SlidersHorizontal, Star } from 'lucide-react'
 import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '~/components/ui/dialog'
 import { FilterBar } from '~/components/filter-bar'
 import { InstitutionTable, InstitutionTableSkeleton } from '~/components/institution-table'
 import { InstitutionPopup } from '~/components/institution-popup'
+import { ShortlistComparison } from '~/components/shortlist-comparison'
 import { EMPTY_FILTERS, PORTAL_URL, selectInstitutions, validateFilters, type Filters } from '~/lib/exchange'
 import { useFavorites } from '~/lib/collections'
 import type { ExplorerIndex, InstitutionSummary } from '~/lib/types'
@@ -23,6 +24,8 @@ export function DashboardShell({ index, view }: { index: ExplorerIndex; view: 't
   const [detailDismissed, setDetailDismissed] = useState(false)
   const [selectionOverride, setSelectionOverride] = useState<InstitutionSummary | null | undefined>(undefined)
   const [helpOpen, setHelpOpen] = useState(false)
+  const [compareOpen, setCompareOpen] = useState(false)
+  const [compareIds, setCompareIds] = useState<string[]>([])
   const { favorites, favoritesOnly, setFavoritesOnly, toggle: toggleFavorite, has: isFavorite } = useFavorites()
   const result = useMemo(() => selectInstitutions(index, filters), [index, filters])
   const visible = useMemo(() => favoritesOnly ? result.institutions.filter(institution => favorites.includes(institution.id)) : result.institutions, [result, favoritesOnly, favorites])
@@ -147,6 +150,7 @@ export function DashboardShell({ index, view }: { index: ExplorerIndex; view: 't
           <button type="button" aria-pressed={favoritesOnly} title={favoritesOnly ? 'Show all destinations' : 'Show favorites only'} onClick={() => setFavoritesOnly(!favoritesOnly)} className={cn('inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium', favoritesOnly ? 'border-amber-300 bg-amber-50 text-amber-900' : 'bg-card text-muted-foreground hover:text-foreground')}>
             <Star className={cn('size-3.5', favoritesOnly ? 'fill-amber-400 text-amber-400' : favorites.length > 0 && 'fill-amber-200 text-amber-500')} />Favorites{favorites.length > 0 && <span className="tabular-nums">({favorites.length})</span>}
           </button>
+          <button type="button" onClick={() => { const currentIds = new Set(index.institutions.map(institution => institution.id)); setCompareIds(favorites.filter(id => currentIds.has(id)).slice(0, 3)); setCompareOpen(true) }} className="inline-flex items-center gap-1.5 rounded-md border bg-card px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"><Columns3 className="size-3.5" />Compare</button>
           <button type="button" aria-label="Keyboard shortcuts" title="Keyboard shortcuts (?)" onClick={() => setHelpOpen(true)} className="inline-flex items-center gap-1.5 rounded-md border bg-card px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"><Keyboard className="size-3.5" /><span className="hidden sm:inline">Shortcuts</span></button>
         </div>
       </div>
@@ -170,6 +174,7 @@ export function DashboardShell({ index, view }: { index: ExplorerIndex; view: 't
       </div>
     </footer>
     {view === 'table' ? <InstitutionPopup institution={selected} agreementIds={selectedAgreementIds} open={selected !== null && !detailDismissed} isFavorite={selected ? isFavorite(selected.id) : false} onToggleFavorite={selected ? () => toggleFavorite(selected.id) : undefined} onOpenChange={open => { if (!open) { flushSync(() => setSelectionOverride(null)); changeFilters({ ...filters, selected: '' }) } }} onShowMap={() => { setDetailDismissed(true); void navigate({ to: '/map', search: filters }) }} /> : null}
+    <ShortlistComparison open={compareOpen} onOpenChange={setCompareOpen} index={index} favorites={favorites} selectedIds={compareIds} onSelectedIdsChange={setCompareIds} onRemoveFavorite={toggleFavorite} academicYear={filters.academicYear} studyField={filters.studyField} />
     <Dialog open={helpOpen} onOpenChange={setHelpOpen}>
       <DialogContent>
         <DialogHeader><DialogTitle>Keyboard shortcuts</DialogTitle><DialogDescription>Navigate KU Abroad without touching the mouse.</DialogDescription></DialogHeader>
