@@ -34,7 +34,7 @@ export function InstitutionTable({ institutions, filters, onChange, onSelect, fa
         </button>
       },
     },
-    { id: 'name', accessorKey: 'name', header: 'Institution', cell: ({ row }) => <button type="button" onClick={() => onSelect(row.original)} className="group text-left focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"><span className="font-medium text-foreground group-hover:text-primary group-hover:underline">{row.original.name}</span><span className="mt-1 flex items-center gap-1 text-xs text-muted-foreground sm:hidden"><MapPin className="size-3" />{[row.original.city, row.original.country].filter(Boolean).join(', ')}</span></button> },
+    { id: 'name', accessorKey: 'name', header: 'Institution', cell: ({ row }) => <button type="button" onClick={() => onSelect(row.original)} className="group text-left focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"><span className="font-medium text-foreground group-hover:text-primary group-hover:underline">{row.original.name}</span>{row.original.reportCount > 0 && <span className="ml-2 whitespace-nowrap text-xs font-normal tabular-nums text-muted-foreground">{row.original.reportCount} report{row.original.reportCount === 1 ? '' : 's'}</span>}<span className="mt-1 flex items-center gap-1 text-xs text-muted-foreground sm:hidden"><MapPin className="size-3" />{[row.original.city, row.original.country].filter(Boolean).join(', ')}</span></button> },
     { id: 'country', accessorKey: 'country', header: 'Country' },
     { id: 'city', accessorKey: 'city', header: 'City' },
     { id: 'agreements', accessorFn: row => row.matchingAgreementIds.length, header: 'Agreements' },
@@ -52,7 +52,7 @@ export function InstitutionTable({ institutions, filters, onChange, onSelect, fa
   function sort(key: SortKey) {
     onChange({ ...filters, sort: key, direction: filters.sort === key && filters.direction === 'asc' ? 'desc' : 'asc', page: 1 })
   }
-  return <div className="overflow-hidden rounded-lg border bg-card">
+  return <div className="institution-table-frame overflow-hidden border bg-card">
     <div className="overflow-x-auto">
       <Table>
         <TableHeader><TableRow className="bg-muted/55 hover:bg-muted/55">
@@ -80,7 +80,7 @@ export function InstitutionTable({ institutions, filters, onChange, onSelect, fa
 }
 
 export function InstitutionTableSkeleton({ rows = 3 }: { rows?: number }) {
-  return <div className="overflow-hidden rounded-lg border bg-card" aria-label="Loading destinations" role="status">
+  return <div className="institution-table-frame overflow-hidden border bg-card" aria-label="Loading destinations" role="status">
     <div className="overflow-x-auto">
       <Table>
         <TableHeader><TableRow className="bg-muted/55 hover:bg-muted/55">

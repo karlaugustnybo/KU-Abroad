@@ -7,7 +7,8 @@ import time
 from urllib.parse import urlencode, urljoin
 
 from portal_data import (Archive, PORTAL_URL, PORTAL_POST, now, action,
-                         collect_pages, parse_partner, agreement, partner_details, digest)
+                         collect_pages, parse_partner, agreement, partner_details,
+                         report_list, report_detail, digest)
 
 
 class Portal:
@@ -81,12 +82,16 @@ class Portal:
             raise ValueError('Portal did not retain selected year/field')
         self.archive.save(json.dumps(selected).encode(), url=PORTAL_URL, kind='selected-filters')
         self.params = self.page.evaluate('''()=>{const disabled=jQuery('#search_form :input:disabled').removeAttr('disabled');const str=jQuery('#search_form').find(':not(.none_request)').serialize();disabled.attr('disabled','disabled');return str;}''')
+        self.resolve_cause_field()
+        return self.table()
+
+    def resolve_cause_field(self):
         fn = self.page.evaluate('openFancy.toString()')
         match = re.search(r'&(cpif_[a-z0-9_]+)=["\']\s*\+\s*cause', fn)
         if not match:
-            raise ValueError('Could not resolve live agreement parameter')
+            raise ValueError('Could not resolve live popup parameter')
         self.cause_field = match.group(1)
-        return self.table()
+        return self.cause_field
 
     def filtered_params(self, year, field=None):
         params = self.page.evaluate('''({year,field}) => {
@@ -268,7 +273,7 @@ class Portal:
             raise ValueError('API rows differ from rendered institution names/counts')
         if paginate:
             paged = self.table(page_size=50)
-            if [parse_partner(r) | {'detailUrl':None,'agreementToken':None} for r in paged] != [parse_partner(r) | {'detailUrl':None,'agreementToken':None} for r in rows]:
+            if [parse_partner(r) | {'detailUrl':None,'agreementToken':None,'reportToken':None} for r in paged] != [parse_partner(r) | {'detailUrl':None,'agreementToken':None,'reportToken':None} for r in rows]:
                 raise ValueError('Paginated rows differ from All rows')
         self.archive.save(page.content().encode(), url=PORTAL_URL, kind='verified-dom')
         return dict(at=now(), year=self.archive.context['academicYear'],
@@ -393,6 +398,85 @@ class Portal:
                     raise ValueError(error)
             output[institution_id] = (results, source_ref)
         return output
+
+    def reports(self, partner):
+        """Fetch one institution's public quest popup and every answer page."""
+        if partner['reportCount'] == 0:
+            return [], None
+        token = partner.get('reportToken')
+        if not token:
+            raise ValueError('Positive report count without a report action')
+        self.archive.context = {'institution': partner['name'],
+                                'institutionId': partner['id'], 'phase': 'report-list'}
+        data, list_ref = self.post({self.cause_field: token, 'target': 'quest',
+                                    'is_load_data': 1, 'is_show_counter': 1})
+        listing = report_list(data, partner)
+        jobs = [dict(key=str(index), url=item['detailUrl'],
+                     context={'institution': partner['name'],
+                              'institutionId': partner['id'], 'phase': 'report-detail'})
+                for index, item in enumerate(listing)]
+        responses = self.request_many(jobs)
+        reports = []
+        for index, item in enumerate(listing):
+            html, ref = responses[str(index)]
+            parsed = report_detail(html, partner['id'], item['fields'], ref)
+            reports.append(parsed)
+        ids = [item['id'] for item in reports]
+        if len(ids) != len(set(ids)):
+            raise ValueError(f"{partner['name']}: duplicate questionnaire identities")
+        return reports, list_ref
+
+    def reports_many(self, partners):
+        """Batch independent popup and detail requests in the same live session."""
+        if not partners:
+            return {}
+        headers = {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                   'X-Requested-With': 'XMLHttpRequest'}
+        list_jobs = []
+        by_id = {partner['id']: partner for partner in partners}
+        result = {partner['id']: ([], None) for partner in partners
+                  if partner['reportCount'] == 0}
+        for partner in partners:
+            if not partner['reportCount']:
+                continue
+            token = partner.get('reportToken')
+            if not token:
+                raise ValueError('Positive report count without a report action')
+            body = self.params + '&' + urlencode({self.cause_field: token,
+                'target': 'quest', 'is_load_data': 1, 'is_show_counter': 1})
+            list_jobs.append(dict(key=partner['id'], url=PORTAL_POST,
+                method='POST', body=body, headers=headers,
+                context={'institution': partner['name'],
+                         'institutionId': partner['id'], 'phase': 'report-list'}))
+        lists = self.request_many(list_jobs)
+        detail_jobs = []
+        listing_by_id = {}
+        for institution_id, (text, list_ref) in lists.items():
+            partner = by_id[institution_id]
+            try:
+                data = json.loads(text)
+            except json.JSONDecodeError as error:
+                raise ValueError('Report popup is not JSON') from error
+            listing = report_list(data, partner)
+            listing_by_id[institution_id] = (listing, list_ref)
+            for index, item in enumerate(listing):
+                detail_jobs.append(dict(key=f'{institution_id}:{index}',
+                    url=item['detailUrl'], context={
+                        'institution': partner['name'],
+                        'institutionId': institution_id, 'phase': 'report-detail'}))
+        details = {}
+        for start in range(0, len(detail_jobs), 50):
+            details.update(self.request_many(detail_jobs[start:start+50]))
+        for institution_id, (listing, list_ref) in listing_by_id.items():
+            reports = []
+            for index, item in enumerate(listing):
+                html, ref = details[f'{institution_id}:{index}']
+                reports.append(report_detail(html, institution_id,
+                                             item['fields'], ref))
+            if len({item['id'] for item in reports}) != len(reports):
+                raise ValueError(f"{by_id[institution_id]['name']}: duplicate questionnaire identities")
+            result[institution_id] = (reports, list_ref)
+        return result
 
     def details(self, partner):
         if not partner['detailUrl']:

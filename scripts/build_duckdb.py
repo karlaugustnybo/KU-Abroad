@@ -8,6 +8,7 @@ query-friendly projection with explicit grains and provenance.
 from __future__ import annotations
 
 import argparse
+import gzip
 import hashlib
 import json
 import os
@@ -17,10 +18,13 @@ from typing import Any, Iterable, Iterator, Sequence
 
 import duckdb
 
+from portal_data import parse_partner
+
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data"
 DEFAULT_OUTPUT = DATA / "ku_abroad.duckdb"
+REPORT_OUTPUT = DATA / "reports.duckdb"
 PUBLISHED_DATASET = ROOT / "src/src/assets/data/institutions.json"
 EXCLUDED_INSTITUTION_CODES = {"DA-Overflytning"}
 
@@ -266,6 +270,55 @@ CREATE TABLE catalog.agreement_academic_years (
     PRIMARY KEY (run_id, agreement_id, academic_year)
 );
 
+CREATE TABLE metadata.report_runs (
+    report_run_id VARCHAR PRIMARY KEY,
+    collected_at TIMESTAMPTZ NOT NULL,
+    source_state_path VARCHAR NOT NULL,
+    source_state_sha256 VARCHAR NOT NULL,
+    report_count INTEGER NOT NULL,
+    quality_report JSON NOT NULL
+);
+
+CREATE TABLE catalog.report_institutions (
+    report_run_id VARCHAR NOT NULL,
+    institution_id VARCHAR NOT NULL,
+    name VARCHAR NOT NULL,
+    country VARCHAR NOT NULL,
+    city VARCHAR,
+    continent VARCHAR,
+    reported_count INTEGER NOT NULL,
+    source_ref VARCHAR NOT NULL,
+    PRIMARY KEY (report_run_id, institution_id)
+);
+
+CREATE TABLE catalog.reports (
+    report_run_id VARCHAR NOT NULL,
+    report_id VARCHAR NOT NULL,
+    institution_id VARCHAR NOT NULL,
+    source_ref VARCHAR NOT NULL,
+    raw_sha256 VARCHAR NOT NULL,
+    content_sha256 VARCHAR NOT NULL,
+    questionnaire_type VARCHAR,
+    academic_year VARCHAR,
+    study_field VARCHAR,
+    language VARCHAR,
+    source_fields JSON NOT NULL,
+    PRIMARY KEY (report_run_id, report_id)
+);
+
+CREATE TABLE catalog.report_answers (
+    report_run_id VARCHAR NOT NULL,
+    report_id VARCHAR NOT NULL,
+    question_ordinal INTEGER NOT NULL,
+    section VARCHAR,
+    question VARCHAR NOT NULL,
+    normalized_question VARCHAR NOT NULL,
+    answer VARCHAR,
+    source_field VARCHAR,
+    links JSON NOT NULL,
+    PRIMARY KEY (report_run_id, report_id, question_ordinal)
+);
+
 CREATE TABLE availability.portal_queries (
     run_id VARCHAR NOT NULL,
     query_key VARCHAR NOT NULL,
@@ -331,6 +384,11 @@ FROM catalog.agreements a
 JOIN metadata.dataset_runs r USING (run_id)
 WHERE r.is_current;
 
+CREATE VIEW mart.current_reports AS
+SELECT r.* EXCLUDE (report_run_id, source_fields)
+FROM catalog.reports r
+JOIN metadata.report_runs run USING (report_run_id);
+
 CREATE VIEW mart.current_exchange_options AS
 SELECT
     q.academic_year,
@@ -382,6 +440,10 @@ TABLE_GRAINS = [
     ("catalog.agreements", "one row per run and agreement", "Typed agreement snapshot plus source JSON"),
     ("catalog.agreement_attributes", "one row per agreement detail field", "Lossless long-form agreement details"),
     ("catalog.agreement_academic_years", "one row per agreement and declared academic year", "Years declared on the agreement itself"),
+    ("metadata.report_runs", "one row per validated questionnaire run", "Separate questionnaire collection lineage"),
+    ("catalog.report_institutions", "one row per institution in a questionnaire run", "Institution identity and location from the questionnaire snapshot"),
+    ("catalog.reports", "one row per questionnaire in the report run", "Institution-linked questionnaire metadata"),
+    ("catalog.report_answers", "one row per asked question in a questionnaire", "Ordered original wording and nullable answer"),
     ("availability.portal_queries", "one row per year/study-field portal query", "Complete query coverage, including empty results"),
     ("availability.query_institution_matches", "one row per query and matched institution", "Institution-level query evidence and provenance"),
     ("availability.query_agreement_matches", "one row per query, institution, and agreement", "Authoritative availability fact"),
@@ -390,7 +452,92 @@ TABLE_GRAINS = [
 ]
 
 
-def build_database(run_id: str, output: Path) -> None:
+def load_report_run(connection: duckdb.DuckDBPyConnection, report_run_id: str) -> None:
+    """Load only a fully validated report run into the reports projection."""
+    run = DATA / "report-runs" / report_run_id
+    state_path = run / "state.json"
+    quality_path = run / "quality-report.json"
+    if not state_path.exists() or not quality_path.exists():
+        raise FileNotFoundError(f"Missing report run files for {report_run_id}")
+    state, quality = read_json(state_path), read_json(quality_path)
+    if state.get("runId") != report_run_id or not state.get("completedAt"):
+        raise ValueError("Report run identity or completion marker is invalid")
+    if quality.get("status") != "complete" or quality.get("discrepancies"):
+        raise ValueError("Only quality-complete report runs can be loaded")
+    reports = state.get("reports", {})
+    def archive_matches(ref: str | None, expected: str | None = None) -> bool:
+        if not ref or not re.fullmatch(r"bodies/[0-9a-f]{64}\.gz", ref):
+            return False
+        path = run / ref
+        if not path.is_file():
+            return False
+        try:
+            sha = hashlib.sha256(gzip.decompress(path.read_bytes())).hexdigest()
+        except (OSError, EOFError):
+            return False
+        return sha == Path(ref).stem and (expected is None or sha == expected)
+    overview_refs = state.get("institutionTableRefs") or []
+    overview = {}
+    for ref in overview_refs:
+        if not archive_matches(ref):
+            raise ValueError("Missing report institution overview source")
+        page = json.loads(gzip.decompress((run / ref).read_bytes()))
+        for row in page.get("aaData", []):
+            partner = parse_partner(row)
+            if partner["id"] in overview:
+                raise ValueError("Duplicate institution in report overview")
+            overview[partner["id"]] = (partner, ref)
+    if set(overview) != set(state.get("institutions", {})):
+        raise ValueError("Report institution overview does not match run state")
+    if any(partner["reportCount"] != state["institutions"][institution_id]["reportedCount"]
+           for institution_id, (partner, _) in overview.items()):
+        raise ValueError("Report institution count differs from overview")
+    referenced = []
+    for institution_id, progress in state.get("institutions", {}).items():
+        ids = progress.get("reportIds") or []
+        if len(ids) != progress.get("reportedCount"):
+            raise ValueError(f"Incomplete report list for {institution_id}")
+        if ids and not archive_matches(progress.get("listRef")):
+            raise ValueError(f"Missing report list source for {institution_id}")
+        referenced.extend(ids)
+    if (len(referenced) != len(set(referenced)) or set(referenced) != set(reports)
+            or len(referenced) != quality.get("collectedReports")):
+        raise ValueError("Report IDs or validated total do not match run state")
+    if any(item["institutionId"] not in overview for item in reports.values()):
+        raise ValueError("Report references an institution outside its overview")
+    if any(not archive_matches(item.get("sourceRef"), item.get("rawSha256"))
+           for item in reports.values()):
+        raise ValueError("Missing or changed report detail body")
+    if any(report_id not in state["institutions"][item["institutionId"]]["reportIds"]
+           for report_id, item in reports.items()):
+        raise ValueError("Report institution association does not match its list")
+
+    insert_many(connection, "INSERT INTO metadata.report_runs VALUES (?, ?, ?, ?, ?, ?)", [(
+        report_run_id, state["completedAt"], str(state_path.relative_to(ROOT)),
+        source_sha256(state_path), len(reports), json_value(quality))])
+    insert_many(connection, "INSERT INTO catalog.report_institutions VALUES (?, ?, ?, ?, ?, ?, ?, ?)", (
+        (report_run_id, institution_id, partner["name"], partner["country"],
+         blank_to_none(partner["city"]), blank_to_none(partner["continent"]),
+         partner["reportCount"], ref)
+        for institution_id, (partner, ref) in overview.items()))
+    insert_many(connection, "INSERT INTO catalog.reports VALUES (" + ",".join("?" * 11) + ")", (
+        (report_run_id, report_id, item["institutionId"], item["sourceRef"],
+         item["rawSha256"], item["contentSha256"], item.get("questionnaireType"),
+         item.get("academicYear"), item.get("studyField"), item.get("language"),
+         json_value(item.get("sourceFields") or {}))
+        for report_id, item in reports.items()))
+    insert_many(connection, "INSERT INTO catalog.report_answers VALUES (" + ",".join("?" * 9) + ")", (
+        (report_run_id, report_id, question["ordinal"], question.get("section"),
+         question["question"], question["normalizedQuestion"],
+         question.get("answer"), question.get("sourceField"),
+         json_value(question.get("links") or []))
+        for report_id, item in reports.items() for question in item["questions"]))
+
+
+def build_database(run_id: str, output: Path, report_run_id: str | None = None) -> None:
+    output = output.resolve()
+    if report_run_id and output == DEFAULT_OUTPUT.resolve():
+        raise ValueError("Questionnaire answers require a separate reports.duckdb output")
     run_dir = DATA / "portal-runs" / run_id
     state_path = run_dir / "state.json"
     manifest_path = run_dir / "manifest.jsonl"
@@ -413,7 +560,6 @@ def build_database(run_id: str, output: Path) -> None:
 
     pointer = read_json(DATA / "current_portal_run.json")
     coordinates = load_coordinates(run_id)
-    output = output.resolve()
     output.parent.mkdir(parents=True, exist_ok=True)
     temporary = output.with_name(f".{output.name}.tmp")
     if temporary.exists():
@@ -649,6 +795,12 @@ def build_database(run_id: str, output: Path) -> None:
             )
         insert_many(connection, "INSERT INTO availability.baseline_observations VALUES (?, ?, ?, ?, ?, ?, ?)", baseline_rows)
 
+        if report_run_id:
+            pointer = read_json(DATA / "current_report_run.json")
+            if pointer.get("runId") != report_run_id:
+                raise ValueError("Report run is not the validated current report run")
+            load_report_run(connection, report_run_id)
+
         # DuckDB's vectorized NDJSON reader is dramatically faster here than
         # Python row insertion and still lets us omit the bulky POST values.
         connection.execute(
@@ -687,15 +839,17 @@ def build_database(run_id: str, output: Path) -> None:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--run", help="Run ID; defaults to data/current_portal_run.json")
-    parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT, help="Output .duckdb path")
+    parser.add_argument("--reports-run", help="Validated report run to load into reports.duckdb")
+    parser.add_argument("--output", type=Path, help="Output .duckdb path")
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
     run_id = args.run or read_json(DATA / "current_portal_run.json")["runId"]
-    build_database(run_id, args.output)
-    with duckdb.connect(str(args.output), read_only=True) as connection:
+    output = args.output or (REPORT_OUTPUT if args.reports_run else DEFAULT_OUTPUT)
+    build_database(run_id, output, args.reports_run)
+    with duckdb.connect(str(output), read_only=True) as connection:
         counts = connection.execute(
             """SELECT
                  (SELECT count(*) FROM catalog.institutions),
@@ -705,7 +859,7 @@ def main() -> None:
                  (SELECT count(*) FROM raw.http_events)"""
         ).fetchone()
     print(
-        f"Built {args.output}: {counts[0]} institutions, {counts[1]} agreements, "
+        f"Built {output}: {counts[0]} institutions, {counts[1]} agreements, "
         f"{counts[2]} queries, {counts[3]} exchange options, {counts[4]} HTTP events."
     )
 

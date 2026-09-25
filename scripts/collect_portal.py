@@ -210,7 +210,7 @@ def collect(portal, run, state):
             resolved = portal.details_many(batch)
             for partner in batch:
                 details, ref = resolved[partner['id']]
-                safe = {k:v for k,v in partner.items() if k not in ('detailUrl','agreementToken')}
+                safe = {k:v for k,v in partner.items() if k not in ('detailUrl','agreementToken','reportToken')}
                 safe.update(partnerDetails=details, sourceRef=ref)
                 state['institutions'][partner['id']] = safe
             save_state(run, state)
@@ -335,7 +335,7 @@ def collect(portal, run, state):
                             resolved_partial.get(institution_id)))
                         if institution_id not in state['institutions']:
                             details, ref = portal.details(partner)
-                            safe_partner = {k:v for k,v in partner.items() if k not in ('detailUrl','agreementToken')}
+                            safe_partner = {k:v for k,v in partner.items() if k not in ('detailUrl','agreementToken','reportToken')}
                             safe_partner.update(partnerDetails=details, sourceRef=ref)
                             state['institutions'][institution_id] = safe_partner
                     query = dict(academicYear=year, studyField=field, status='success',

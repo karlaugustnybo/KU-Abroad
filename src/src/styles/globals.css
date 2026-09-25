@@ -133,3 +133,27 @@
     @apply font-sans;
   }
 }
+
+.map-frame,
+.institution-table-frame {
+  --explorer-surface-radius: var(--radius-lg);
+  border-radius: var(--explorer-surface-radius);
+}
+
+.map-frame {
+  --map-inner-radius: calc(var(--explorer-surface-radius) - 1px);
+}
+
+.map-frame::after {
+  content: '';
+  position: absolute;
+  z-index: 30;
+  inset: 0;
+  border: 1px solid var(--border);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.map-frame-content {
+  border-radius: var(--map-inner-radius);
+}

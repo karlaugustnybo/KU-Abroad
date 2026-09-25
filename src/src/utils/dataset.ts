@@ -1,9 +1,18 @@
 import { createServerFn } from '@tanstack/react-start'
 import explorerIndex from '~/assets/data/explorer-index.json'
 import institutionDetails from '~/assets/data/institution-details.json'
+import reportCounts from '~/assets/data/report-counts.json'
 import type { ExplorerIndex, InstitutionDetails } from '~/lib/types'
 
-const index = explorerIndex as unknown as ExplorerIndex
+const sourceIndex = explorerIndex as unknown as ExplorerIndex
+const counts = reportCounts.counts as Record<string, number>
+const index: ExplorerIndex = {
+  ...sourceIndex,
+  institutions: sourceIndex.institutions.map(institution => ({
+    ...institution,
+    reportCount: counts[institution.id] ?? 0,
+  })),
+}
 const details = institutionDetails as unknown as Record<string, InstitutionDetails>
 const detailCache = new Map<string, InstitutionDetails>()
 const detailRequests = new Map<string, Promise<InstitutionDetails>>()

@@ -1,6 +1,6 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
-import { ClientOnly, Link, useNavigate, useSearch } from '@tanstack/react-router'
+import { ClientOnly, Link, useLocation, useNavigate, useSearch } from '@tanstack/react-router'
 import { Columns3, ExternalLink, Keyboard, List, Loader2, Map as MapIcon, SlidersHorizontal, Star } from 'lucide-react'
 import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '~/components/ui/dialog'
@@ -15,9 +15,11 @@ import { cn } from '~/lib/utils'
 
 const loadDeckMap = () => import('~/components/deck-map')
 const DeckMap = lazy(loadDeckMap)
+const warmDeckMap = () => { void loadDeckMap().then(module => module.preloadBasemapStyle()).catch(() => undefined) }
 const CONTINENTS = ['Africa', 'Asia', 'Australia/Oceania', 'Europe', 'North America', 'South America']
 
-export function DashboardShell({ index, view }: { index: ExplorerIndex; view: 'table' | 'map' }) {
+export function DashboardShell({ index }: { index: ExplorerIndex }) {
+  const view = useLocation({ select: location => location.pathname === '/map' ? 'map' as const : 'table' as const })
   const rawSearch = useSearch({ strict: false })
   const filters = useMemo(() => validateFilters(rawSearch), [rawSearch])
   const navigate = useNavigate()
@@ -26,6 +28,7 @@ export function DashboardShell({ index, view }: { index: ExplorerIndex; view: 't
   const [helpOpen, setHelpOpen] = useState(false)
   const [compareOpen, setCompareOpen] = useState(false)
   const [compareIds, setCompareIds] = useState<string[]>([])
+  const [mapInitialized, setMapInitialized] = useState(view === 'map')
   const { favorites, favoritesOnly, setFavoritesOnly, toggle: toggleFavorite, has: isFavorite } = useFavorites()
   const result = useMemo(() => selectInstitutions(index, filters), [index, filters])
   const visible = useMemo(() => favoritesOnly ? result.institutions.filter(institution => favorites.includes(institution.id)) : result.institutions, [result, favoritesOnly, favorites])
@@ -35,6 +38,7 @@ export function DashboardShell({ index, view }: { index: ExplorerIndex; view: 't
   const maxPlaces = useMemo(() => Math.max(0, ...(index.agreementPlaces ?? [])), [index.agreementPlaces])
   const mapped = visible.filter(institution => institution.lat != null && institution.lon != null).length
   const pageCount = Math.max(1, Math.ceil(visible.length / 25))
+  const hasResults = result.status !== 'unavailable' && visible.length > 0
 
   const changeFilters = useCallback((next: Filters, replace = true) => {
     void navigate({ to: view === 'map' ? '/map' : '/', search: next, replace })
@@ -61,36 +65,28 @@ export function DashboardShell({ index, view }: { index: ExplorerIndex; view: 't
     else if (filters.page > pageCount) changeFilters({ ...filters, page: pageCount })
   }, [filters, routeSelected, pageCount, changeFilters])
   useEffect(() => {
-    if (view !== 'table') return
-
-    let idleId: number | undefined
-    let fallbackId: number | undefined
-    let cancelled = false
-    const preload = () => {
-      if (cancelled) return
-      const warmMapBundle = () => {
-        void loadDeckMap()
-          .then(module => module.preloadBasemapStyle())
-          .catch(() => undefined)
-      }
-      const requestIdle = window.requestIdleCallback
-      if (requestIdle) {
-        idleId = requestIdle(warmMapBundle, { timeout: 3_000 })
-      } else {
-        fallbackId = window.setTimeout(warmMapBundle, 250)
-      }
+    if (mapInitialized) return
+    if (view === 'map') {
+      setMapInitialized(true)
+      return
     }
 
-    if (document.readyState === 'complete') preload()
-    else window.addEventListener('load', preload, { once: true })
-
+    // Let the table paint before starting WebGL, tile requests, and the map bundle.
+    let cancelled = false
+    let idleId: number | undefined
+    let timeoutId: number | undefined
+    const frameId = window.requestAnimationFrame(() => {
+      const initialize = () => { if (!cancelled) setMapInitialized(true) }
+      if (typeof window.requestIdleCallback === 'function') idleId = window.requestIdleCallback(initialize, { timeout: 2000 })
+      else timeoutId = window.setTimeout(initialize, 0)
+    })
     return () => {
       cancelled = true
-      window.removeEventListener('load', preload)
+      window.cancelAnimationFrame(frameId)
       if (idleId !== undefined) window.cancelIdleCallback(idleId)
-      if (fallbackId !== undefined) window.clearTimeout(fallbackId)
+      if (timeoutId !== undefined) window.clearTimeout(timeoutId)
     }
-  }, [view])
+  }, [mapInitialized, view])
 
   useEffect(() => {
     const isTypingTarget = (target: EventTarget | null) => {
@@ -140,7 +136,7 @@ export function DashboardShell({ index, view }: { index: ExplorerIndex; view: 't
         <h1 className="text-2xl font-semibold tracking-tight text-[#18212b] sm:text-3xl">Explore partner universities</h1>
         <nav aria-label="Result view" className="grid grid-cols-2 rounded-lg border bg-card p-1 shadow-xs">
           <Link to="/" search={filters} className={cn('inline-flex h-8 items-center justify-center gap-2 rounded-md px-4 text-sm font-medium', view === 'table' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground')}><List className="size-4" />Table</Link>
-          <Link to="/map" search={filters} className={cn('inline-flex h-8 items-center justify-center gap-2 rounded-md px-4 text-sm font-medium', view === 'map' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground')}><MapIcon className="size-4" />Map</Link>
+          <Link to="/map" search={filters} onPointerEnter={warmDeckMap} onFocus={warmDeckMap} className={cn('inline-flex h-8 items-center justify-center gap-2 rounded-md px-4 text-sm font-medium', view === 'map' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground')}><MapIcon className="size-4" />Map</Link>
         </nav>
       </div>
       <FilterBar filters={filters} onChange={changeFilters} countries={countries} continents={CONTINENTS} academicYears={index.academicYears} studyFields={index.studyFields} programs={index.programs ?? []} studyLevels={index.studyLevels ?? []} maxPlaces={maxPlaces} yearAttention={result.status === 'overview'} />
@@ -154,11 +150,14 @@ export function DashboardShell({ index, view }: { index: ExplorerIndex; view: 't
           <button type="button" aria-label="Keyboard shortcuts" title="Keyboard shortcuts (?)" onClick={() => setHelpOpen(true)} className="inline-flex items-center gap-1.5 rounded-md border bg-card px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"><Keyboard className="size-3.5" /><span className="hidden sm:inline">Shortcuts</span></button>
         </div>
       </div>
-      {result.status === 'unavailable' ? <EmptyState title="Data unavailable" description="Try another academic year or study field, or check the official KU portal." />
-        : favoritesOnly && favorites.length === 0 ? <EmptyState title="No favorites yet" description="Tap the star next to any institution to pin it here for later comparison." actionLabel="Show all destinations" onClear={() => setFavoritesOnly(false)} />
-        : visible.length === 0 ? <EmptyState title="No destinations match" description="Remove one or more filters to broaden your search." onClear={() => changeFilters(EMPTY_FILTERS)} />
-        : view === 'table' ? <InstitutionTable institutions={visible} filters={filters} onChange={changeFilters} onSelect={select} favorites={favorites} onToggleFavorite={toggleFavorite} />
-        : <MapExperience institutions={visible} routeSelected={routeSelected} index={index} initiallyDismissed={detailDismissed} isFavorite={isFavorite} onToggleFavorite={toggleFavorite} onSelectUrl={institution => changeFilters({ ...filters, selected: institution.id }, false)} onClearUrl={() => changeFilters({ ...filters, selected: '' })} onShowTable={showTable} />}
+      <div className="relative">
+        {result.status === 'unavailable' ? <EmptyState title="Data unavailable" description="Try another academic year or study field, or check the official KU portal." />
+          : favoritesOnly && favorites.length === 0 ? <EmptyState title="No favorites yet" description="Tap the star next to any institution to pin it here for later comparison." actionLabel="Show all destinations" onClear={() => setFavoritesOnly(false)} />
+          : visible.length === 0 ? <EmptyState title="No destinations match" description="Remove one or more filters to broaden your search." onClear={() => changeFilters(EMPTY_FILTERS)} />
+          : view === 'table' ? <InstitutionTable institutions={visible} filters={filters} onChange={changeFilters} onSelect={select} favorites={favorites} onToggleFavorite={toggleFavorite} />
+          : null}
+        <MapExperience initialized={mapInitialized} active={view === 'map' && hasResults} institutions={visible} routeSelected={routeSelected} index={index} initiallyDismissed={detailDismissed} isFavorite={isFavorite} onToggleFavorite={toggleFavorite} onSelectStart={() => setDetailDismissed(false)} onSelectUrl={institution => changeFilters({ ...filters, selected: institution.id }, false)} onClearUrl={() => changeFilters({ ...filters, selected: '' })} onShowTable={showTable} />
+      </div>
     </main>
     <footer className="border-t bg-background">
       <div className="mx-auto flex max-w-[90rem] flex-col items-center justify-between gap-3 px-4 py-4 text-xs text-muted-foreground sm:flex-row sm:px-6 lg:px-8">
@@ -187,34 +186,53 @@ export function DashboardShell({ index, view }: { index: ExplorerIndex; view: 't
 }
 
 interface MapExperienceProps {
+  initialized: boolean
+  active: boolean
   institutions: InstitutionSummary[]
   routeSelected: InstitutionSummary | null
   index: ExplorerIndex
   initiallyDismissed: boolean
   isFavorite: (id: string) => boolean
   onToggleFavorite: (id: string) => void
+  onSelectStart: () => void
   onSelectUrl: (institution: InstitutionSummary) => void
   onClearUrl: () => void
   onShowTable: () => void
 }
 
-function MapExperience({ institutions, routeSelected, index, initiallyDismissed, isFavorite, onToggleFavorite, onSelectUrl, onClearUrl, onShowTable }: MapExperienceProps) {
+function MapExperience({ initialized, active, institutions, routeSelected, index, initiallyDismissed, isFavorite, onToggleFavorite, onSelectStart, onSelectUrl, onClearUrl, onShowTable }: MapExperienceProps) {
   const [selectionOverride, setSelectionOverride] = useState<InstitutionSummary | null | undefined>(undefined)
   const [dismissed, setDismissed] = useState(initiallyDismissed)
+  const selectionSerial = useRef(0)
   const selected = selectionOverride === undefined ? routeSelected : selectionOverride
   const agreementIds = selected?.matchingAgreementIds.map(id => index.agreementIds[id]).filter(Boolean) ?? []
 
-  const select = useCallback((institution: InstitutionSummary) => {
-    const selectionStartedAt = performance.now()
+  const select = useCallback((institution: InstitutionSummary, clickStartedAt: number) => {
+    const serial = ++selectionSerial.current
+    const handlerStartedAt = performance.now()
     flushSync(() => {
+      onSelectStart()
       setDismissed(false)
       setSelectionOverride(institution)
     })
+    const committedAt = performance.now()
     window.requestAnimationFrame(() => {
-      if (import.meta.env.DEV) console.debug(`[map-popup] ready for paint in ${(performance.now() - selectionStartedAt).toFixed(1)}ms`)
-      window.setTimeout(() => onSelectUrl(institution), 0)
+      const firstFrameAt = performance.now()
+      window.requestAnimationFrame(() => {
+        if (import.meta.env.DEV) console.debug(`[map-popup] ${JSON.stringify({
+          dispatchMs: +(handlerStartedAt - clickStartedAt).toFixed(1),
+          commitMs: +(committedAt - handlerStartedAt).toFixed(1),
+          firstFrameMs: +(firstFrameAt - clickStartedAt).toFixed(1),
+          nextFrameMs: +(performance.now() - clickStartedAt).toFixed(1),
+        })}`)
+        window.setTimeout(() => {
+          if (selectionSerial.current === serial) onSelectUrl(institution)
+        }, 0)
+      })
     })
-  }, [onSelectUrl])
+  }, [onSelectStart, onSelectUrl])
+
+  useEffect(() => () => { selectionSerial.current++ }, [])
 
   useEffect(() => {
     if (selectionOverride === undefined) return
@@ -222,10 +240,10 @@ function MapExperience({ institutions, routeSelected, index, initiallyDismissed,
   }, [routeSelected?.id, selectionOverride])
 
   return <>
-    <div className="h-[calc(100vh-22rem)] min-h-[28rem] overflow-hidden rounded-xl border bg-card shadow-xs">
-      <ClientOnly fallback={<MapLoading />}><Suspense fallback={<MapLoading />}><DeckMap institutions={institutions} selected={routeSelected} onSelect={select} onShowTable={onShowTable} /></Suspense></ClientOnly>
+    <div aria-hidden={!active} inert={!active} className={cn('map-frame relative h-[calc(100vh-22rem)] min-h-[28rem] overflow-hidden bg-card p-px shadow-xs', !active && 'pointer-events-none absolute left-[-10000px] top-0 w-full opacity-0')}>
+      {initialized && <ClientOnly fallback={<MapLoading />}><Suspense fallback={<MapLoading />}><DeckMap active={active} focusSelected={active && initiallyDismissed} institutions={institutions} selected={routeSelected} onSelect={select} onShowTable={onShowTable} /></Suspense></ClientOnly>}
     </div>
-    <InstitutionPopup institution={selected} agreementIds={agreementIds} open={selected !== null && !dismissed} isFavorite={selected ? isFavorite(selected.id) : false} onToggleFavorite={selected ? () => onToggleFavorite(selected.id) : undefined} onOpenChange={open => { if (!open) { flushSync(() => setSelectionOverride(null)); onClearUrl() } }} onShowMap={() => setDismissed(true)} />
+    <InstitutionPopup institution={selected} agreementIds={agreementIds} open={active && selected !== null && !dismissed && !initiallyDismissed} isFavorite={selected ? isFavorite(selected.id) : false} onToggleFavorite={selected ? () => onToggleFavorite(selected.id) : undefined} onOpenChange={open => { if (!open) { selectionSerial.current++; flushSync(() => setSelectionOverride(null)); onClearUrl() } }} onShowMap={() => setDismissed(true)} />
   </>
 }
 

@@ -9,68 +9,115 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as MapRouteImport } from './routes/map'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as ExploreRouteImport } from './routes/_explore'
+import { Route as ExploreIndexRouteImport } from './routes/_explore/index'
+import { Route as ReportsReportIdRouteImport } from './routes/reports/$reportId'
+import { Route as ExploreMapRouteImport } from './routes/_explore/map'
 
-const MapRoute = MapRouteImport.update({
-  id: '/map',
-  path: '/map',
+const ExploreRoute = ExploreRouteImport.update({
+  id: '/_explore',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
+const ExploreIndexRoute = ExploreIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => ExploreRoute,
+} as any)
+const ReportsReportIdRoute = ReportsReportIdRouteImport.update({
+  id: '/reports/$reportId',
+  path: '/reports/$reportId',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ExploreMapRoute = ExploreMapRouteImport.update({
+  id: '/map',
+  path: '/map',
+  getParentRoute: () => ExploreRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/map': typeof MapRoute
+  '/': typeof ExploreIndexRoute
+  '/map': typeof ExploreMapRoute
+  '/reports/$reportId': typeof ReportsReportIdRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/map': typeof MapRoute
+  '/map': typeof ExploreMapRoute
+  '/reports/$reportId': typeof ReportsReportIdRoute
+  '/': typeof ExploreIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/map': typeof MapRoute
+  '/_explore': typeof ExploreRouteWithChildren
+  '/_explore/map': typeof ExploreMapRoute
+  '/reports/$reportId': typeof ReportsReportIdRoute
+  '/_explore/': typeof ExploreIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/map'
+  fullPaths: '/' | '/map' | '/reports/$reportId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/map'
-  id: '__root__' | '/' | '/map'
+  to: '/map' | '/reports/$reportId' | '/'
+  id:
+    | '__root__'
+    | '/_explore'
+    | '/_explore/map'
+    | '/reports/$reportId'
+    | '/_explore/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  MapRoute: typeof MapRoute
+  ExploreRoute: typeof ExploreRouteWithChildren
+  ReportsReportIdRoute: typeof ReportsReportIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/map': {
-      id: '/map'
-      path: '/map'
-      fullPath: '/map'
-      preLoaderRoute: typeof MapRouteImport
+    '/_explore': {
+      id: '/_explore'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof ExploreRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
+    '/_explore/': {
+      id: '/_explore/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+      preLoaderRoute: typeof ExploreIndexRouteImport
+      parentRoute: typeof ExploreRoute
+    }
+    '/reports/$reportId': {
+      id: '/reports/$reportId'
+      path: '/reports/$reportId'
+      fullPath: '/reports/$reportId'
+      preLoaderRoute: typeof ReportsReportIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_explore/map': {
+      id: '/_explore/map'
+      path: '/map'
+      fullPath: '/map'
+      preLoaderRoute: typeof ExploreMapRouteImport
+      parentRoute: typeof ExploreRoute
     }
   }
 }
 
+interface ExploreRouteChildren {
+  ExploreMapRoute: typeof ExploreMapRoute
+  ExploreIndexRoute: typeof ExploreIndexRoute
+}
+
+const ExploreRouteChildren: ExploreRouteChildren = {
+  ExploreMapRoute: ExploreMapRoute,
+  ExploreIndexRoute: ExploreIndexRoute,
+}
+
+const ExploreRouteWithChildren =
+  ExploreRoute._addFileChildren(ExploreRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  MapRoute: MapRoute,
+  ExploreRoute: ExploreRouteWithChildren,
+  ReportsReportIdRoute: ReportsReportIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

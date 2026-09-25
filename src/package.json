@@ -11,6 +11,7 @@
     "preview": "bunx srvx --prod -s ../client dist/server/server.js",
     "start": "bunx srvx --prod -s ../client dist/server/server.js",
     "build:data": "bun scripts/build-data.ts",
+    "build:reports": "cd .. && uv run --no-sync python scripts/export_reports.py",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test": "bun test"

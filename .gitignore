@@ -22,6 +22,9 @@ build/
 *.swp
 *.swo
 
+# Local planning documents
+docs/
+
 # Environment variables
 .env
 .env.local
@@ -35,6 +38,8 @@ build/
 # Data generated during scraping / portal runs
 data/portal-runs/
 data/portal-runs-archive/
+data/report-runs/
+data/reports.duckdb
 data/portal-runs*/
 data/partner_details/
 data/agreement_details/

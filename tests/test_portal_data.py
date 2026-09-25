@@ -60,6 +60,22 @@ class PortalDataTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'Unexpected count'):
             parse_partner(row(count='unknown'))
 
+    def test_report_action_is_extracted_but_not_part_of_institution_id(self):
+        first = row()
+        first[8] = '<a onclick="openFancy(\'quest\', \'session-one\')">2</a>'
+        second = row()
+        second[8] = '<a onclick="openFancy(\'quest\', \'session-two\')">2</a>'
+        parsed = parse_partner(first)
+        self.assertEqual(parsed['reportCount'], 2)
+        self.assertEqual(parsed['reportToken'], 'session-one')
+        self.assertEqual(parsed['id'], parse_partner(second)['id'])
+
+    def test_positive_report_count_requires_action(self):
+        item = row()
+        item[8] = '<span>2</span>'
+        with self.assertRaisesRegex(ValueError, 'Positive report count'):
+            parse_partner(item)
+
     def test_raw_bytes_are_lossless_and_versions_append(self):
         with tempfile.TemporaryDirectory() as directory:
             archive=Archive(directory)

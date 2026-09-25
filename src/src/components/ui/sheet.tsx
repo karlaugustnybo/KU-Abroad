@@ -8,14 +8,13 @@ export const SheetTrigger = SheetPrimitive.Trigger
 export const SheetClose = SheetPrimitive.Close
 
 export function SheetContent({ className, children, side = 'right', instant = false, ...props }: React.ComponentProps<typeof SheetPrimitive.Content> & { side?: 'right' | 'bottom'; instant?: boolean }) {
-  const forceMount = instant ? true : undefined
-  return <SheetPrimitive.Portal forceMount={forceMount}>
-    <SheetPrimitive.Overlay forceMount={forceMount} className={cn('fixed inset-0 z-50 bg-slate-950/25', instant ? 'animate-none data-[state=closed]:invisible data-[state=closed]:pointer-events-none' : 'backdrop-blur-[2px] data-[state=open]:animate-in data-[state=closed]:animate-out')} />
+  return <SheetPrimitive.Portal>
+    <SheetPrimitive.Overlay className={cn('fixed inset-0 z-50 bg-slate-950/25', instant ? 'animate-none' : 'backdrop-blur-[2px] data-[state=open]:animate-in data-[state=closed]:animate-out')} />
     <SheetPrimitive.Content className={cn(
       'fixed z-50 flex flex-col bg-background shadow-2xl outline-none',
-      instant ? 'animate-none data-[state=closed]:invisible data-[state=closed]:pointer-events-none' : 'data-[state=open]:animate-in data-[state=closed]:animate-out',
+      instant ? 'animate-none' : 'data-[state=open]:animate-in data-[state=closed]:animate-out',
       side === 'right' ? 'inset-y-0 right-0 w-[min(92vw,30rem)] overflow-hidden border-l' : 'inset-x-0 bottom-0 h-auto max-h-[92vh] flex-col overflow-hidden rounded-t-xl border-t', className,
-    )} forceMount={forceMount} {...props}>
+    )} {...props}>
       {children}
       <SheetPrimitive.Close className="absolute right-4 top-4 rounded-md p-1 text-muted-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
         <X className="size-5" /><span className="sr-only">Close</span>

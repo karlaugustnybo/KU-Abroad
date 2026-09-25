@@ -35,6 +35,11 @@ cd src
 bun run build:data
 ```
 
+Student reports appear in each institution panel. The full report export is
+built separately from the verified questionnaire run with `bun run build:reports`
+inside `src/`. Report text is loaded only
+when a reader opens an individual report.
+
 ## Author
 
 Made by [Karl August Krogh Nybo](https://github.com/karlaugustnybo).

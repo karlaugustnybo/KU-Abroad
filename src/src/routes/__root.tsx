@@ -12,6 +12,7 @@ import { TooltipProvider } from '~/components/ui/tooltip'
 export const Route = createRootRoute({
   head: () => ({
     meta: [
+      { title: 'KU Abroad · Partner Institutions' },
       { charSet: 'utf-8' },
       {
         name: 'viewport',
@@ -23,7 +24,12 @@ export const Route = createRootRoute({
           "Explore KU's partner institutions, mobility agreements and global cooperation network.",
       }),
     ],
-    links: [{ rel: 'stylesheet', href: appCss }],
+    links: [
+      { rel: 'stylesheet', href: appCss },
+      { rel: 'preconnect', href: 'https://basemaps.cartocdn.com' },
+      { rel: 'preconnect', href: 'https://tiles.basemaps.cartocdn.com' },
+      { rel: 'preconnect', href: 'https://tiles-a.basemaps.cartocdn.com' },
+    ],
   }),
   component: RootComponent,
 })

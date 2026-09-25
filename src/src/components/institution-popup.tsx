@@ -5,6 +5,7 @@ import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { Separator } from '~/components/ui/separator'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '~/components/ui/sheet'
+import { InstitutionReports } from '~/components/institution-reports'
 import { loadInstitutionDetails } from '~/utils/dataset'
 import { aggregateGradeRequirement, formatGrade } from '~/lib/grade'
 import { PORTAL_URL } from '~/lib/exchange'
@@ -62,8 +63,10 @@ function Agreement({ agreement }: { agreement: AgreementRow }) {
 }
 
 export function InstitutionPopup({ institution, agreementIds, open, onOpenChange, onShowMap, isFavorite = false, onToggleFavorite }: Props) {
+  const [activeTab, setActiveTab] = useState<'details' | 'reports'>('details')
   const [loaded, setLoaded] = useState<{ institutionId: string; details: InstitutionDetails } | null>(null)
   const [error, setError] = useState(false)
+  useEffect(() => setActiveTab('details'), [institution?.id])
   useEffect(() => {
     let current = true
     setError(false)
@@ -81,9 +84,14 @@ export function InstitutionPopup({ institution, agreementIds, open, onOpenChange
   return <Sheet open={open} onOpenChange={onOpenChange}>
     {open && <SheetContent instant className="w-full sm:w-[min(92vw,42rem)]">
       <SheetHeader><SheetTitle>{institution?.name || 'Institution details'}</SheetTitle><SheetDescription className="flex items-center gap-1"><MapPin className="size-3.5" />{institution && [institution.city, institution.country].filter(Boolean).join(', ')}</SheetDescription></SheetHeader>
-      {!institution ? null : error ? <div className="m-5 rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm"><div className="flex items-center gap-2 font-medium"><AlertCircle className="size-4 text-destructive" />Details could not be loaded</div><p className="mt-1 text-muted-foreground">Close this panel and try again.</p></div>
-        : !details ? <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground"><Loader2 className="mr-2 size-4 animate-spin" />Loading details…</div>
-        : <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-8">
+      {institution && <div role="tablist" aria-label="Institution information" className="flex gap-5 border-b px-5">
+        <button type="button" role="tab" id="institution-details-tab" aria-controls="institution-details-panel" aria-selected={activeTab === 'details'} onClick={() => setActiveTab('details')} className={cn('border-b-2 py-3 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring', activeTab === 'details' ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground')}>Details</button>
+        <button type="button" role="tab" id="institution-reports-tab" aria-controls="institution-reports-panel" aria-selected={activeTab === 'reports'} onClick={() => setActiveTab('reports')} className={cn('border-b-2 py-3 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring', activeTab === 'reports' ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground')}>Reports <span className="tabular-nums">({institution.reportCount})</span></button>
+      </div>}
+      {activeTab === 'reports' && institution ? <div id="institution-reports-panel" role="tabpanel" aria-labelledby="institution-reports-tab" className="min-h-0 flex-1 overflow-y-auto px-5 py-5"><InstitutionReports key={institution.id} institutionId={institution.id} reportCount={institution.reportCount} /></div>
+      : !institution ? null : error ? <div id="institution-details-panel" role="tabpanel" aria-labelledby="institution-details-tab" className="m-5 rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm"><div className="flex items-center gap-2 font-medium"><AlertCircle className="size-4 text-destructive" />Details could not be loaded</div><p className="mt-1 text-muted-foreground">Close this panel and try again.</p></div>
+        : !details ? <div id="institution-details-panel" role="tabpanel" aria-labelledby="institution-details-tab" className="flex flex-1 items-center justify-center text-sm text-muted-foreground"><Loader2 className="mr-2 size-4 animate-spin" />Loading details…</div>
+        : <div id="institution-details-panel" role="tabpanel" aria-labelledby="institution-details-tab" className="min-h-0 flex-1 overflow-y-auto px-5 pb-8">
           <div className="flex flex-wrap gap-2 py-4">{institution.lat != null && institution.lon != null && <Button variant="outline" onClick={onShowMap}><Map />Show on map</Button>}{onToggleFavorite && <Button variant="outline" aria-pressed={isFavorite} onClick={onToggleFavorite}><Star className={cn(isFavorite && 'fill-amber-400 text-amber-400')} />{isFavorite ? 'Saved' : 'Save'}</Button>}<Button asChild variant="outline"><a href={PORTAL_URL} target="_blank" rel="noopener noreferrer"><ExternalLink />Official KU portal</a></Button></div>
           {details.partnerDetails && <section><h3 className="text-sm font-semibold">Institution information</h3><dl className="mt-2"><DetailRow label="Institution code" value={details.partnerDetails.code} /><DetailRow label="Description" value={details.partnerDetails.description} /><DetailRow label="Semester dates" value={details.partnerDetails.semesterDates} /><DetailRow label="Academic calendar" value={details.partnerDetails.academicCalendar} /><DetailRow label="ECTS converter" value={details.partnerDetails.ectsConverter} /><DetailRow label="Faculty contact" value={details.partnerDetails.facultyContact} /><DetailRow label="Housing contact" value={details.partnerDetails.housingContact} /><DetailRow label="Comment" value={details.partnerDetails.comment} /></dl>
             {!!details.partnerDetails.documents.length && <div className="mt-3 space-y-2">{details.partnerDetails.documents.map(document => <a key={document.url} href={document.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-primary hover:underline"><FileText className="size-4" />{document.label}</a>)}</div>}

@@ -21,7 +21,8 @@ class BuildDuckDBTests(unittest.TestCase):
 
     def test_build_current_run(self) -> None:
         with duckdb.connect(str(self.database), read_only=True) as connection:
-            self.assertEqual(connection.execute("SELECT count(*) FROM catalog.institutions").fetchone()[0], 525)
+            # The source has 525 rows; DA-Overflytning is excluded from catalog.
+            self.assertEqual(connection.execute("SELECT count(*) FROM catalog.institutions").fetchone()[0], 524)
             self.assertEqual(connection.execute("SELECT count(*) FROM catalog.agreements").fetchone()[0], 611)
             self.assertEqual(connection.execute("SELECT count(*) FROM availability.portal_queries").fetchone()[0], 342)
             self.assertEqual(connection.execute("SELECT count(*) FROM raw.http_events").fetchone()[0], 30_510)

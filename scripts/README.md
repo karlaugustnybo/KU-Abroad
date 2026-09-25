@@ -53,3 +53,44 @@ uv run python scripts/build_duckdb.py
 
 See [`data/DUCKDB.md`](../data/DUCKDB.md) for the model, grains, and example
 queries.
+
+## Exchange student questionnaires
+
+Inspect a small public sample before each new collector format change:
+
+```sh
+uv run python scripts/inspect_reports.py --run sample-2026-09-24 --samples 3
+```
+
+The inspection run archives the initial institution rows, the `quest` popup
+JSON, and one public answer page per sampled institution under
+`data/portal-investigation/<run>/`. See
+[`report-investigation.md`](report-investigation.md) for the observed format and
+the current source limitation.
+
+Collect all institutions in a **separate** resumable run:
+
+```sh
+uv run python scripts/collect_reports.py --run 2026-09-24 --concurrency 6
+uv run python scripts/build_duckdb.py --reports-run 2026-09-24
+```
+
+Report progress and raw responses stay under `data/report-runs/<run>/`. Each
+institution is checkpointed only after its list and all detail pages have
+been parsed and archived. Restart with the same run ID to verify archived
+bodies and skip complete institutions. The collector updates
+`data/current_report_run.json` only when every observed count matches and all
+details have a unique institution association. It does not change
+`data/current_portal_run.json`.
+
+The report projection is written to gitignored `data/reports.duckdb`.
+The ordinary `build_duckdb.py` command keeps questionnaire answers out of the
+tracked database. The public web export includes the original free-text
+answers and source links; the raw HTML archive remains private.
+
+The web app publishes all reports in the validated report run. After building
+`data/reports.duckdb`, run `cd src && bun run build:reports` to regenerate the
+small count index, institution lists, and one JSON file per report under
+`src/public/reports/<run-id>/`. Run it again after refreshing the explorer
+data with `bun run build:data`. The exporter checks run completeness, report
+counts, institution matches, and report IDs before replacing public files.
