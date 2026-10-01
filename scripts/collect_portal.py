@@ -168,10 +168,14 @@ def map_filtered_partner(portal, partner, baseline_record, agreements, resolved=
     # detail token. Narrowed results must fetch their detail pages to identify the
     # exact canonical agreements.
     details, source_ref = resolved or portal.agreement_details(partner)
+    discrepancy_rows = [item for item in details if item.get('sourceDiscrepancy')]
     discrepancies = [item.get('sourceDiscrepancy') for item in details
                      if item.get('sourceDiscrepancy')]
     details = [item for item in details if not item.get('sourceDiscrepancy')]
-    if discrepancies or len(details) != filtered_count:
+    reviewed_duplicates = bool(discrepancies) and all(
+        item.get('reviewedDuplicate') for item in discrepancy_rows)
+    if (discrepancies and not reviewed_duplicates) or (
+            len(details) != filtered_count and not reviewed_duplicates):
         raise ValueError(
             f"{partner['name']}: cannot map filtered agreements exactly "
             f"(table {filtered_count}, details {len(details)})"
@@ -179,13 +183,16 @@ def map_filtered_partner(portal, partner, baseline_record, agreements, resolved=
     ids = [item['id'] for item in details]
     if len(ids) != len(set(ids)):
         raise ValueError('Filtered result contains indistinguishable duplicate agreements')
+    if not ids or len(ids) > filtered_count:
+        raise ValueError('Filtered result has an invalid unique agreement count')
     unknown_ids = [agreement_id for agreement_id in ids if agreement_id not in baseline_set]
     if unknown_ids:
         raise ValueError(f'Filtered agreements not in year baseline: {unknown_ids}')
     for item in details:
         agreements.setdefault(item['id'], item)
     return dict(institutionId=partner['id'], agreementIds=ids,
-                sourceRef=source_ref, method='filtered-details-mapped-to-baseline')
+                sourceRef=source_ref, method='filtered-details-mapped-to-baseline',
+                acceptedSourceDiscrepancies=discrepancies)
 
 
 def collect(portal, run, state):
@@ -330,9 +337,12 @@ def collect(portal, run, state):
                     for partner in partners:
                         institution_id = partner['id']
                         baseline_record = baseline_agreement_ids[institution_id]
-                        matches.append(map_filtered_partner(
+                        match = map_filtered_partner(
                             portal, partner, baseline_record, state['agreements'],
-                            resolved_partial.get(institution_id)))
+                            resolved_partial.get(institution_id))
+                        matches.append(match)
+                        accepted_source_discrepancies.extend(
+                            match.get('acceptedSourceDiscrepancies', []))
                         if institution_id not in state['institutions']:
                             details, ref = portal.details(partner)
                             safe_partner = {k:v for k,v in partner.items() if k not in ('detailUrl','agreementToken','reportToken')}

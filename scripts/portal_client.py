@@ -11,6 +11,28 @@ from portal_data import (Archive, PORTAL_URL, PORTAL_POST, now, action,
                          report_list, report_detail, digest)
 
 
+# Reviewed against archived popup rows and detail pages on 2026-10-01:
+# Sorbonne exposes two identical 4EU+ entries for 2027/2028. Keep one
+# public agreement, preserve both source references, and report the discrepancy.
+REVIEWED_DUPLICATE_AGREEMENTS = {
+    ('2027/2028', 'Sorbonne University', 'Sorbonne University - Erasmus - 4EU+'),
+}
+
+
+def collapse_reviewed_duplicates(items, year, institution):
+    unique = {}
+    for item in items:
+        previous = unique.get(item['id'])
+        if previous is None:
+            unique[item['id']] = item
+            continue
+        review = (year, institution, item['details'].get('Agreement name'))
+        if review not in REVIEWED_DUPLICATE_AGREEMENTS or previous['details'] != item['details']:
+            raise ValueError('Indistinguishable duplicate agreements; requires review')
+        previous.setdefault('duplicateSourceRefs', []).append(item['sourceRef'])
+    return list(unique.values()), len(items) - len(unique)
+
+
 class Portal:
     def __init__(self, browser, archive: Archive, delay=0.5, concurrency=6):
         self.context = browser.new_context()
@@ -55,6 +77,7 @@ class Portal:
         self.options = self.page.evaluate('''() => Object.fromEntries([...document.querySelectorAll('#search_form select')].map(s=>[document.querySelector('label[for="'+s.id+'"]')?.innerText, [...s.options].map(o=>({label:o.text,value:o.value}))]))''')
         self.page.locator('button[value="Agreements"]').click()
         self.idle()
+        self.resolve_cause_field()
 
     def search(self, year, field=None):
         self.archive.context = dict(academicYear=year, studyField=field, application='Outgoing', person='Students')
@@ -387,8 +410,18 @@ class Portal:
                 if detail_token:
                     item['detailTokenBase'] = detail_token.split('_sep_', 1)[0]
                 results.append(item)
-            if len({item['id'] for item in results}) != len(results):
-                raise ValueError('Indistinguishable duplicate agreements; requires review')
+            results, duplicate_count = collapse_reviewed_duplicates(
+                results, context['academicYear'], partner['name'])
+            if duplicate_count:
+                if duplicate_count != 1 or len(rows) != partner['agreementCount']:
+                    raise ValueError('Reviewed duplicate does not explain the reported count')
+                error = (f"{partner['name']}: table reports {partner['agreementCount']} "
+                         f"agreements, popup contains {len(results)} unique agreements "
+                         f"({len(rows)} rows; {duplicate_count} reviewed identical duplicate)")
+                results.append(dict(sourceDiscrepancy=error, reviewedDuplicate=True,
+                                    details={}, ids=[]))
+                output[institution_id] = (results, source_ref)
+                continue
             if len(results) != partner['agreementCount']:
                 error = (f"{partner['name']}: table reports {partner['agreementCount']} "
                          f"agreements, popup contains {len(rows)} (source discrepancy)")

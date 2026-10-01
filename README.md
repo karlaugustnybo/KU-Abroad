@@ -10,7 +10,9 @@ The Python pipeline scrapes the official KU portal and builds a DuckDB database.
 
 ```bash
 # Requires Python ≥3.11 and uv. The first run creates the virtualenv.
+uv run python scripts/collect_portal.py --verify --run $(date +%Y-%m-%d)
 uv run python scripts/collect_portal.py --collect --run $(date +%Y-%m-%d)
+bun run build:data
 uv run python scripts/build_duckdb.py
 ```
 
@@ -28,12 +30,16 @@ bun run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-To generate the front-end JSON assets from the DuckDB database:
+To generate the front-end JSON assets from the validated portal run:
 
 ```bash
 cd src
 bun run build:data
 ```
+
+Run this before rebuilding DuckDB after a scrape. It reapplies country naming
+rules and saved coordinate overrides, carries forward coordinates for unchanged
+institutions, and makes those coordinates available to the database build.
 
 Student reports appear in each institution panel. The full report export is
 built separately from the verified questionnaire run with `bun run build:reports`

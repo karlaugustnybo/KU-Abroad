@@ -48,8 +48,14 @@ After a run passes verification and quality checks, build the query-friendly
 DuckDB projection:
 
 ```sh
+bun run build:data
 uv run python scripts/build_duckdb.py
 ```
+
+Build the web dataset first: it reapplies country naming rules and
+`geocode_overrides.json`, and preserves coordinates for unambiguous matching
+institutions. DuckDB imports coordinates from that dataset only when its run ID
+matches the run being built.
 
 See [`data/DUCKDB.md`](../data/DUCKDB.md) for the model, grains, and example
 queries.

@@ -178,6 +178,24 @@ class PortalDataTests(unittest.TestCase):
         self.assertEqual(match['method'],'filtered-details-mapped-to-baseline')
         self.assertIn('b',agreements)
 
+    def test_reviewed_duplicate_filtered_rows_map_to_unique_baseline_agreement(self):
+        partner = {'id': 'i', 'name': 'Sorbonne University', 'agreementCount': 2}
+        resolved = ([{'id': 'b', 'details': {}},
+                     {'sourceDiscrepancy': 'reviewed identical duplicate',
+                      'reviewedDuplicate': True}], 'filtered')
+        match = map_filtered_partner(None, partner,
+            {'ids': ['a', 'b'], 'reportedCount': 3, 'sourceRef': 'baseline'}, {}, resolved)
+        self.assertEqual(match['agreementIds'], ['b'])
+        self.assertEqual(match['acceptedSourceDiscrepancies'], ['reviewed identical duplicate'])
+
+    def test_unreviewed_filtered_discrepancy_is_rejected(self):
+        partner = {'id': 'i', 'name': 'U', 'agreementCount': 2}
+        resolved = ([{'id': 'b', 'details': {}},
+                     {'sourceDiscrepancy': 'unreviewed missing row'}], 'filtered')
+        with self.assertRaisesRegex(ValueError, 'cannot map filtered agreements exactly'):
+            map_filtered_partner(None, partner,
+                {'ids': ['a', 'b'], 'reportedCount': 3, 'sourceRef': 'baseline'}, {}, resolved)
+
     def test_partial_filtered_count_rejects_non_baseline_agreement(self):
         class Portal:
             def agreement_details(self, partner):

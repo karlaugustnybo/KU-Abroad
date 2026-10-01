@@ -1,11 +1,14 @@
 import shutil
+import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 import duckdb
 
-from scripts.build_duckdb import build_database
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
+from scripts.build_duckdb import DATA, build_database, read_json
 
 
 class BuildDuckDBTests(unittest.TestCase):
@@ -13,7 +16,15 @@ class BuildDuckDBTests(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.directory = Path(tempfile.mkdtemp())
         cls.database = cls.directory / "ku_abroad.duckdb"
-        build_database("2026-09-19", cls.database)
+        # Keep this historical fixture current inside its temporary database,
+        # independently of whichever live scrape has since been published.
+        def fixture_json(path):
+            if path == DATA / 'current_portal_run.json':
+                return {'runId': '2026-09-19'}
+            return read_json(path)
+
+        with patch('scripts.build_duckdb.read_json', side_effect=fixture_json):
+            build_database("2026-09-19", cls.database)
 
     @classmethod
     def tearDownClass(cls) -> None:

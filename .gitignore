@@ -45,6 +45,7 @@ data/partner_details/
 data/agreement_details/
 data/portal-investigation/
 data/dataset-history/
+data/refresh-audits/
 data/*.json
 data/*.jsonl
 data/*.gz

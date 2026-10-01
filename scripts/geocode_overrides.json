@@ -78,5 +78,25 @@
   "University of the Arts Helsinki": {
     "lat": 60.1816697,
     "lon": 24.9596878
+  },
+  "O. P. JINDAL GLOBAL UNIVERSITY": {
+    "lat": 28.9262837,
+    "lon": 77.0563008
+  },
+  "Rikkyo University": {
+    "lat": 35.7300767,
+    "lon": 139.7029288
+  },
+  "Tecnológico de Monterrey": {
+    "lat": 25.6507267,
+    "lon": -100.289319
+  },
+  "The Leibniz Institute for Food Systems Biology at TUM": {
+    "lat": 48.3980339,
+    "lon": 11.7110829
+  },
+  "Université Toulouse 2 Jean Jaurès": {
+    "lat": 43.5783751,
+    "lon": 1.4010003
   }
 }
